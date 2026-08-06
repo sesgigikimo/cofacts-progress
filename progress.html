@@ -1,0 +1,3626 @@
+<!doctype html>
+<html lang="zh-Hant"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cofacts 待驗證排查:目的 · 流程 · 進度</title>
+<style>
+ body { font-family: "Noto Sans TC","PingFang TC",system-ui,sans-serif; max-width: 1200px;
+        margin: 2rem auto; padding: 0 1rem; color:#222; }
+ h1 { font-size:1.4rem; } h2 { font-size:1.15rem; margin-top:2rem; }
+ .stats { color:#555; margin:.5rem 0 1rem; }
+ .note { color:#888; font-size:.85rem; }
+ table { border-collapse:collapse; width:100%; font-size:.92rem; }
+ details { margin: 1rem 0; }
+ summary { font-size:1.1rem; cursor:pointer; margin-bottom:.5rem; }
+ th,td { border:1px solid #ddd; padding:.4rem .6rem; vertical-align:top; text-align:left; }
+ th { background:#f5f5f5; }
+ .num { text-align:right; white-space:nowrap; }
+ .txt { word-break:break-all; }
+ small { color:#888; }
+ a { color:#2a5db0; }
+ .callout { background:#fdf4f4; border-left:4px solid #d9534f; padding:.7rem 1rem;
+            margin-top:1rem; border-radius:4px; }
+ .flowsvg { display:block; margin:0 auto; width:100%; max-width:780px; height:auto;
+            font-family:inherit; }
+ svg.flowsvg text { font-size:13.5px; text-anchor:middle; fill:#333; }
+ svg.flowsvg .t-title { font-weight:bold; font-size:15px; }
+ svg.flowsvg .t-blue { fill:#3a5a9a; }
+ svg.flowsvg .t-red { fill:#b03a36; font-weight:bold; }
+ svg.flowsvg .t-gold { fill:#8a6d1f; }
+ svg.flowsvg .t-dim { fill:#7a8db5; }
+ svg.flowsvg .t-note { text-anchor:start; font-size:12px; fill:#7a8db5; }
+ .note ul { margin:.4rem 0; padding-left:1.3rem; }
+ .note li { margin:.25rem 0; }
+</style></head><body>
+<h1>Cofacts 待驗證排查專案</h1>
+<div class="stats">待排查 458 筆 · 已排查 39 筆 · 略過 4 筆 · 最後更新 2026-08-06 12:02</div>
+
+<h2>1. 本專案目的</h2>
+<p>Cofacts「真的假的」平台上,民眾透過 LINE 回報的可疑訊息持續累積;
+其中<b>被回報很多次、卻一直沒人回應</b>的熱門訊息,是最需要被查核的一批——
+它們正在社群裡廣泛流傳,卻缺乏可查的澄清資訊。</p>
+<p>本專案建立一套<b>半自動排查流程</b>:以程式定期撈取「熱門可疑訊息 + 尚無有用回應」的交集清單,
+由 LLM 依查證 SOP(追溯訊息來源、查核資料正確性、引用數據追到原始出處)產出回應草稿,
+<b>全程經人工審核後</b>才以建立者帳號公開回寫到 Cofacts。
+下方「實際進度」逐筆公開我們做過哪些排查、回覆連結在哪,供社群與官方團隊檢視。</p>
+<p class="note">已排查的回應以「Huang Daniel」帳號公開發表於 cofacts.tw。</p>
+<div class="callout">以「自動化 + LLM」的方式可以大量、快速地產出查證結果,但目前最缺乏的是協助<b>人工審核(review)</b>的志工——這個環節無法自動化,需要社群的力量一起加入。</div>
+
+
+<h2>2. 處理流程</h2>
+<svg class="flowsvg" viewBox="0 0 760 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="處理流程圖">
+ <defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+   <path d="M0 0 L10 5 L0 10 z" fill="#5b7ec9"/></marker>
+  <marker id="arrY" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+   <path d="M0 0 L10 5 L0 10 z" fill="#c9a227"/></marker>
+  <marker id="arrR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+   <path d="M0 0 L10 5 L0 10 z" fill="#d9534f"/></marker>
+ </defs>
+
+ <!-- 主線 ① -->
+ <rect x="160" y="8" width="260" height="150" rx="10" fill="#f4f7fd" stroke="#5b7ec9" stroke-width="1.5"/>
+ <text x="290" y="34" class="t-title t-blue">① 資料取得</text>
+ <text x="290" y="56">官網待驗證訊息</text>
+ <text x="290" y="72" class="t-dim">↓</text>
+ <text x="290" y="88">抓取清單</text>
+ <text x="290" y="104" class="t-dim">↓</text>
+ <text x="290" y="120">本地清單 DB</text>
+ <text x="290" y="136" class="t-dim">↓</text>
+ <text x="290" y="152">SOP 自動過濾</text>
+
+ <!-- 分支:計畫中 -->
+ <text x="595" y="70" class="t-title" fill="#8a6d1f" font-size="13">計畫中(尚未實作)</text>
+ <line x1="420" y1="148" x2="466" y2="148" stroke="#c9a227" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrY)"/>
+ <rect x="470" y="112" width="250" height="84" rx="8" fill="#fffdf5" stroke="#c9a227" stroke-width="1.5" stroke-dasharray="6 4"/>
+ <text x="595" y="132" fill="#8a6d1f" font-weight="bold">影片內容處理</text>
+ <text x="595" y="152">偵測到影片 / YouTube 連結</text>
+ <text x="595" y="174">⇣ yt-dlp 語音轉文字</text>
+ <line x1="595" y1="196" x2="595" y2="216" stroke="#c9a227" stroke-width="2" stroke-dasharray="4 4"/>
+ <rect x="470" y="218" width="250" height="84" rx="8" fill="#fffdf5" stroke="#c9a227" stroke-width="1.5" stroke-dasharray="6 4"/>
+ <text x="595" y="238" fill="#8a6d1f" font-weight="bold">圖片內容處理</text>
+ <text x="595" y="258">偵測到圖片</text>
+ <text x="595" y="280">⇣ 視覺 LLM OCR 分析、分離文字</text>
+
+ <!-- 計畫中 → ②(文字結果回流併入查證) -->
+ <line x1="470" y1="260" x2="424" y2="260" stroke="#c9a227" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrY)"/>
+
+ <!-- ①→② -->
+ <line x1="290" y1="158" x2="290" y2="190" stroke="#5b7ec9" stroke-width="2" marker-end="url(#arr)"/>
+ <text x="302" y="180" class="t-note">符合查證條件</text>
+
+ <!-- 主線 ② -->
+ <rect x="160" y="192" width="260" height="134" rx="10" fill="#f4f7fd" stroke="#5b7ec9" stroke-width="1.5"/>
+ <text x="290" y="216" class="t-title t-blue">② 查證產出(LLM)</text>
+ <text x="290" y="238">後台逐筆檢視</text>
+ <text x="290" y="254" class="t-dim">↓</text>
+ <text x="290" y="270">查證三步驟</text>
+ <text x="290" y="286" class="t-dim">↓</text>
+ <text x="290" y="302">產出草稿</text>
+
+ <!-- ②→③ -->
+ <line x1="290" y1="326" x2="290" y2="358" stroke="#5b7ec9" stroke-width="2" marker-end="url(#arr)"/>
+
+ <!-- 主線 ③ (人工) -->
+ <rect x="160" y="360" width="260" height="64" rx="10" fill="#fdf4f4" stroke="#d9534f" stroke-width="2"/>
+ <text x="290" y="384" class="t-title t-red">③ 人工審核(唯一人工環節)</text>
+ <text x="290" y="408">review 後 confirm 才送出</text>
+
+ <!-- ③→④ 與退回迴圈 -->
+ <line x1="290" y1="424" x2="290" y2="460" stroke="#5b7ec9" stroke-width="2" marker-end="url(#arr)"/>
+ <text x="302" y="450" class="t-note">confirm 通過 → 上傳</text>
+ <path d="M 160 424 C 100 424, 100 259, 157 259" fill="none" stroke="#d9534f" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#arrR)"/>
+ <text x="104" y="345" text-anchor="end" font-size="12" fill="#d9534f">退回修改</text>
+
+ <!-- 主線 ④ -->
+ <rect x="160" y="462" width="260" height="100" rx="10" fill="#f4f7fd" stroke="#5b7ec9" stroke-width="1.5"/>
+ <text x="290" y="486" class="t-title t-blue">④ 上傳歸檔</text>
+ <text x="290" y="508">上傳回應</text>
+ <text x="290" y="524" class="t-dim">↓</text>
+ <text x="290" y="540">記錄歸檔</text>
+</svg>
+
+<div class="note">
+<b>各步驟細節</b>
+<ul>
+ <li><b>抓取清單</b>:cofacts.tw GraphQL <code>ListArticles</code>,條件 = 回報數 ≥2 且無有用回應(即官網「熱門可疑訊息」篩選),依回報人數降序存入本地 <code>backlog.db</code>。</li>
+ <li><b>SOP 自動過濾</b>:全文只有圖片或影片連結(YouTube、FB 等)、無文字可查證者直接略過(標 skip)。</li>
+ <li><b>後台逐筆檢視</b>:本地後台頁面列出每筆摘要與 cofacts 原文連結。</li>
+ <li><b>查證三步驟</b>:1. 找訊息原文來源 2. 查證資料正確性 3. 引用數據找原始出處。</li>
+ <li><b>產出草稿</b>:判定類型(RUMOR / NOT_RUMOR / OPINIONATED / NOT_ARTICLE),本文 ≤240 字,來源放 reference 欄位;每批 10 篇存檔 <code>drafts/ROUNDn.md</code>,驗字數、抽查連結。</li>
+ <li><b>人工審核</b>:作者逐篇 review,confirm 才能送出;有疑問退回重查。全流程唯一人工環節。</li>
+ <li><b>上傳回應</b>:GraphQL <code>CreateReply</code>(koa:sess cookie 認證),冪等重送、403 自動退避,每篇間隔 5 秒。</li>
+ <li><b>記錄歸檔</b>:DB 標 done、<code>posted_replies</code> 入帳、<code>PENDING.md</code> 記錄 reply ID;本頁「實際進度」由 <code>sync_progress.py</code> 每日重新產生。</li>
+</ul>
+</div>
+
+
+<h2>3. 實際進度</h2>
+<details><summary><b>已排查(39)</b></summary>
+<table><tr><th>#</th><th>回報人數</th><th>訊息內容(摘要)</th><th>最後回報時間</th><th>備註</th></tr>
+<tr>
+ <td>1</td>
+ <td class="num">153</td>
+ <td class="txt"><a href="https://cofacts.tw/article/4icD_wP_gAPgH-Af4AfgP_R_wA-YD5AP-g_4D5Btg4E" target="_blank">「中油 74 週年慶,中獎其實就是你」抽獎活動 ･活動期間 109 年6 月1 日起至109年6月30日止 二、活動辦法 (一)歡度週年慶,來抽【加油金】 憑活動期間於中油自營及加盟汽車加油站單筆交易折抵後發票 金額 50 元(含)以上之實…</a><br><a href="https://cofacts.tw/reply/Ri9i0Z8BEY7yIwhpQ1ZA" target="_blank">查核回應</a></td>
+ <td>2022-09-30 07:57<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>2</td>
+ <td class="num">117</td>
+ <td class="txt"><a href="https://cofacts.tw/article/33f8jzdogp26i" target="_blank">阿公阿嬤請注意！  台北市敬老卡終於迎來「史詩級進化」了🔥 以前月底為了消耗點數瘋狂搭公車的日子，即將走入歷史？ 因為...點數不但能累積，還能直接衝超商換鮮奶啦！  常常聽到家裡長輩碎念：「這個月點數又沒用完，直接歸零好浪費喔！」 台北市…</a><br><a href="https://cofacts.tw/reply/0C-n0J8BEY7yIwhp1FTz" target="_blank">查核回應</a></td>
+ <td>2026-07-13 20:38<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>3</td>
+ <td class="num">112</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2ho4vay54kv6t" target="_blank">一個AI的回答，毀了一個英雄傳奇  徐靜波  5月25傍晚，東京澀谷區的一棟普通住宅裡，發生了一件看上去並不罕見的家庭插曲。  15歲妹妹和18歲的姐姐吵架，父親出面勸阻。結果大女兒頂嘴，父親一時衝動，抓住大女兒的衣領，將她推倒在地。  這…</a><br><a href="https://cofacts.tw/reply/KS9c0Z8BEY7yIwhpaFYx" target="_blank">查核回應</a></td>
+ <td>2026-06-20 21:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>4</td>
+ <td class="num">103</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1w308g30qxdxq" target="_blank">西陵電子公司創辦人臺北工專校友吳思鍾對蔡英文政府及賴清德政府的忠吿：  敬致各位先進、好友、鄉親：      拙文「蔡英文，晶片科技不可外流印度！」4月上旬在風傳媒刊出，之後，我即出差大陸。日前返台，發現有諸多回應，知識份子對政府縱容晶片科…</a><br><a href="https://cofacts.tw/reply/NS9h0J8BEY7yIwhpmVTi" target="_blank">查核回應</a></td>
+ <td>2026-08-04 12:30<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>5</td>
+ <td class="num">102</td>
+ <td class="txt"><a href="https://cofacts.tw/article/6tgfcui0v8u4" target="_blank">網站標誌圖片	營養師程涵宇 Dietitian Han-Yu Chen 米酵菌酸(Bongkrek acid)是什麼？  	 chapaper 03-28 米酵菌酸(Bongkrek acid)中毒是中國法定傳染病，引起的食物中毒病例導致高…</a><br><a href="https://cofacts.tw/reply/Ki9c0Z8BEY7yIwhpgFYL" target="_blank">查核回應</a></td>
+ <td>2024-04-06 18:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>6</td>
+ <td class="num">90</td>
+ <td class="txt"><a href="https://cofacts.tw/article/371r6bym3xbf8" target="_blank">早安好友：週五愉快！ 分享好文～ 《意念對健康的影響！》  美國的戴維·霍金斯博士是一位醫生，在美國很有名，他醫治了很多來自世界各地的病人。他研究發現：「人的意念振動頻率如果在200以上就不生病。」  戴維·霍金斯發現，凡是生病的人一般都用…</a><br><a href="https://cofacts.tw/reply/LS9c0Z8BEY7yIwhpl1ZS" target="_blank">查核回應</a></td>
+ <td>2025-12-22 13:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>7</td>
+ <td class="num">89</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3jvuhypxzijvs" target="_blank">檢查一下家中的胡椒粉，辣椒粉，咖哩粉，反正只要是粉的都檢查一下 如果製造商是這九家，「津棧、釜山、廣元、龍海、杰展、佳廣、初衣食伍、鼎記、海順」就先丟了保險一點</a><br><a href="https://cofacts.tw/reply/NC9c0Z8BEY7yIwhprlbG" target="_blank">查核回應</a></td>
+ <td>2024-04-02 21:18<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>8</td>
+ <td class="num">85</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2l5qgub7pftji" target="_blank">🔘徐耀昌是台灣政治人物，中國國民黨籍，生於苗栗縣南庄鄉。他曾任苗栗縣縣長、立法委員、頭份鎮鎮長。  ⚠️朱立倫:考紀會嚴正處理 不信徐耀昌口誤「下架國民黨」? 📺 https://youtu.be/oU30dK1acLM https://y…</a><br><a href="https://cofacts.tw/reply/Ny9c0Z8BEY7yIwhpx1aL" target="_blank">查核回應</a></td>
+ <td>2024-09-03 12:07<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>9</td>
+ <td class="num">85</td>
+ <td class="txt"><a href="https://cofacts.tw/article/32vj2n8qrila8" target="_blank">「如果活到80歲」 是日本著名精神科醫師和田秀樹的著作，在「老人國」日本非常暢銷。台灣的老人人口快速增加，也很派得上用場。不過，他的非典型醫師價值觀，也適用於一般人。 什麼叫做非典型，就是「必要時請遠離醫師，健康靠自己」的價值觀。我隨著行醫…</a><br><a href="https://cofacts.tw/reply/Oy9c0Z8BEY7yIwhp3lb3" target="_blank">查核回應</a></td>
+ <td>2026-05-27 20:12<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>10</td>
+ <td class="num">82</td>
+ <td class="txt"><a href="https://cofacts.tw/article/w3PCWpEBd3gcY0LpgSz6" target="_blank">大家好,你是不是認為最乾淨、最安全的飲用水就是賣得比汽油還貴的塑膠瓶裝水呢? 你知道它每公升還有多少塑膠顆粒嗎? 第一,一百顆 第二,一千顆 第三,一萬顆 第四,大於十萬顆 答案是四,大於十萬顆 你會不會嚇一大跳呢? 2021年,世界衛生組…</a><br><a href="https://cofacts.tw/reply/Pi9c0Z8BEY7yIwhp9lYz" target="_blank">查核回應</a></td>
+ <td>2024-10-22 09:05<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>11</td>
+ <td class="num">80</td>
+ <td class="txt"><a href="https://cofacts.tw/article/9_e1M40BAjOeMOkl4Y6h" target="_blank">請不吝點贊訂閱轉發打賞支持明鏡與點點欄目 請不吝點贊訂閱轉發打賞支持明鏡與點點欄目 請不吝點贊訂閱轉發打賞支持明鏡與點點欄目 請不吝點贊訂閱轉發打賞支持明鏡與點點欄目 請不吝點贊訂閱轉發打賞支持明鏡與點點欄目</a><br><a href="https://cofacts.tw/reply/QS9d0Z8BEY7yIwhpDVah" target="_blank">查核回應</a></td>
+ <td>2024-08-03 07:38<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>12</td>
+ <td class="num">78</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAPgB__f8A8ABz4H_gf-B_4H_4_EA6ABwADAH4Af__8" target="_blank">今年三月開始夜間彈性限電了 正本 檔號: 保存年限: 台灣電力股份有限公司公告 發文日期:中華民國111年1月13日 發文字號:電業字第11180007231號 附件: 主旨:本公司111年度「計畫性減少用電措施-彈性夜減型」提前自 3月起…</a><br><a href="https://cofacts.tw/reply/Vy881Z8BEY7yIwhpAVyh" target="_blank">查核回應</a></td>
+ <td>2022-12-20 13:54<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>13</td>
+ <td class="num">76</td>
+ <td class="txt"><a href="https://cofacts.tw/article/28vkv3qq4sybg" target="_blank">17個“真是沒想到”  1,強肝最簡單的方式 : 答案：真是沒想到是徒步。  2,強腎最簡單的 : 答案：真是沒想到是踮腳尖。  3,強肺最簡單的 : 答案：真是沒想到是深呼吸。  4,強胃最簡單的 : 答案：真是沒想到是揉腹。  5,強心…</a><br><a href="https://cofacts.tw/reply/Wi881Z8BEY7yIwhpGVwV" target="_blank">查核回應</a></td>
+ <td>2026-01-07 19:51<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>14</td>
+ <td class="num">74</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2zxww80con1xg" target="_blank">2023.3.7 譚敦慈講座重點整理：  1. 摸過生雞蛋一定要確實洗手，不然一旦感染沙門氏菌，有可能拉肚子拉到腸子破掉。  2. 一顆芭樂、木瓜，清除18根香腸的亞硝酸鹽，可有效避免大腸癌的發生。  3. 口服藥一律只能配白開水。  4.…</a><br><a href="https://cofacts.tw/reply/Wy881Z8BEY7yIwhpMFzg" target="_blank">查核回應</a></td>
+ <td>2025-12-27 13:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>15</td>
+ <td class="num">72</td>
+ <td class="txt"><a href="https://cofacts.tw/article/4WOEX48BUCqzrknpi9fd" target="_blank">經常在外面吃飯的朋友們,一定要小心這五道菜,廚師自己都不吃,而客人很喜歡。如果您知道真相的話,就算餓死你也不會吃了,特別是最後一道,太噁心了。 記得點贊收藏轉發給你的家人和朋友,一定要提醒他們下次不要再點了。第一個是牛蛙,干鍋牛蛙是很多人心…</a><br><a href="https://cofacts.tw/reply/XS881Z8BEY7yIwhpSFxz" target="_blank">查核回應</a></td>
+ <td>2024-10-16 15:01<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>16</td>
+ <td class="num">72</td>
+ <td class="txt"><a href="https://cofacts.tw/article/eZwPUo4BBMtPEaE0xtmw" target="_blank">在網際網路上傳播的影片逐字稿，是一則在網際網路上傳播的影片的逐字稿。內容如下， 在網際網路上傳播的影片逐字稿，是一則在網際網路上傳播的影片逐字稿。 內容如下，是一則在網際網路上傳播的影片逐字稿。 內容如下，是一則在網際網路上傳播的影片逐字稿…</a><br><a href="https://cofacts.tw/reply/Yy881Z8BEY7yIwhpX1yx" target="_blank">查核回應</a></td>
+ <td>2025-01-17 16:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>17</td>
+ <td class="num">70</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8xhnuht287me" target="_blank">【 聽到自殺式無人機的聲音要怎樣做：來自烏克蘭的教學 】  英譯：https://www.facebook.com/kateryna.yushchenko.3/posts/24783428547955782  原文：https://www.…</a><br><a href="https://cofacts.tw/reply/ZC881Z8BEY7yIwhpd1wJ" target="_blank">查核回應</a></td>
+ <td>2026-01-16 11:26<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>18</td>
+ <td class="num">70</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AABpvk4Of_5f_l_-CRBAAmI-fi59pAUof_4F4AfgB-A" target="_blank">新東陽、黑橋牌 豬肉製品被香港查獲萊克多巴胺 超標數十倍! 目前股價 元 加權平均 [S#&amp;%! S#&amp;%! S#&amp;%! S#&amp;%! S#&amp;%! 新東陽 原味香腸 成交價(元) EPS (元) 20.61 一般平均 20.33 新東陽(12…</a><br><a href="https://cofacts.tw/reply/Zy881Z8BEY7yIwhpjlxb" target="_blank">查核回應</a></td>
+ <td>2021-06-09 16:28<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>19</td>
+ <td class="num">68</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2i5bjd78twlxg" target="_blank">民進黨蔡英文政府的官員個個臉皮厚到不行，民國106年負責擔任所謂「軍公教年金改革的負責人」，副總統陳建仁（軍公教年改委員會主委）、行政院政務委員林萬億（軍公教年金改革執行長），都是無恥之徒，前暨南大學退休校長李家同因為被年改而造成退休金只剩…</a><br><a href="https://cofacts.tw/reply/aC881Z8BEY7yIwhppVxE" target="_blank">查核回應</a></td>
+ <td>2024-01-05 21:21<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>20</td>
+ <td class="num">68</td>
+ <td class="txt"><a href="https://cofacts.tw/article/IWO_DY8BUCqzrknpdFg1" target="_blank">這黃瓜的待遇都上來了 這還有人專門給洗澡啊 這傢伙的 看這兩個大哥呀 這茄子是用洗衣粉洗的嗎 媽洗完直接裝走了 以後這茄子可不敢吃 我這吃的菜 你就哪有那麼放心的嘛 吃的 整整大擺著 你看看一口那口的 全涼水裡頭了 那啥意思呢 那是 我說買…</a><br><a href="https://cofacts.tw/reply/bC881Z8BEY7yIwhpvFyR" target="_blank">查核回應</a></td>
+ <td>2024-09-04 19:37<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>21</td>
+ <td class="num">67</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8A_wD7_9AAGAH_g_D4GPBwwHjg_8D4wf6B-oA74zA3M" target="_blank">史上首次 全國發低溫特報 寒流影響時間:1/23(六)下午~1/26(二)清晨 ●寒流影響程度:預計出現攝氏10℃以下低溫 ●沿海地區、離島亦發布強風特報 圖中為周末各地 最低體感溫度 預測 連江縣 -3°C 金門縣 -1°C |澎湖縣 -…</a><br><a href="https://cofacts.tw/reply/bi881Z8BEY7yIwhp01xj" target="_blank">查核回應</a></td>
+ <td>2021-01-24 16:50<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>22</td>
+ <td class="num">57</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3ynkqp03g6xd" target="_blank">家鄉梅雨季節後，進入暑夏天氣爆熱也將到來。 老中醫言： 一輩子很短，來不及細算，不知不覺丟了童年，悄無聲息沒了青春。 不情不願，進入了老年，珍惜眼前，活好當；健康第一。  老中醫提示： 馬上進入三伏天了 提醒好好照顧自己💞  初伏：7月11…</a><br><a href="https://cofacts.tw/reply/zy-n0J8BEY7yIwhp0VQ-" target="_blank">查核回應</a></td>
+ <td>2026-07-25 01:07<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>23</td>
+ <td class="num">57</td>
+ <td class="txt"><a href="https://cofacts.tw/article/24lwtf0tcxwsx" target="_blank">💥高溫是如何摧殘人體的？  🌡️33度，身體感到熱，汗腺這個身體自備空調系統開啟工作狀態，透過流汗來散熱。  🌡️35度，看似人畜無害，實際上已經相當危險。氣象學有關說明，單日氣溫達到35度以上被稱為高溫天氣，靠扇子搧風已經無法達到降溫目標…</a><br><a href="https://cofacts.tw/reply/FS9b0J8BEY7yIwhpQ1TM" target="_blank">查核回應</a></td>
+ <td>2026-08-05 11:36<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>24</td>
+ <td class="num">50</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2PVSGIsBAjOeMOklZwbe" target="_blank">到了下午茶時間,您喜歡吃烤吐司嗎? 我們要特別提醒大家要注意了 因為國內的研究發現原來烤吐司竟然會釋放出一種腎臟的毒素 那麼恐怕會有致癌的危機 而且一天其實只要吃一片的量就可能危害健康 兩片吐司烤成金黃色再抹上果醬是不少人早餐的選擇之一 但…</a><br><a href="https://cofacts.tw/reply/Ni9h0J8BEY7yIwhpoFQF" target="_blank">查核回應</a></td>
+ <td>2026-08-01 13:14<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>25</td>
+ <td class="num">50</td>
+ <td class="txt"><a href="https://cofacts.tw/article/258vhf1cgcdj9" target="_blank">我第一次替林老師推病床進手術室時，她沒有認出我。  她只是躺在病床上，臉色蒼白，手指緊緊抓著床單。  我穿著白袍，低頭替她確認腕帶。  姓名：林慧珍。  年齡：六十七歲。  手術項目：心臟繞道手術。  我看著那三個字，喉嚨突然發緊。  二十…</a><br><a href="https://cofacts.tw/reply/Ny9h0J8BEY7yIwhppFTz" target="_blank">查核回應</a></td>
+ <td>2026-07-29 09:14<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>26</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1hsl1udofrnik" target="_blank">為什麼有國仇家恨的國民黨高層不反共還親共？  原來他們有非常龐大的利益（數兆元）在中國，已經被中國綁架，且他們都有海外關係，他們的子女或兄弟姐妹有外國國籍，台灣和中國簽訂和平協議一國兩制，他們可以像現在的香港人逃到國外，繼續享受台灣被統一前…</a><br><a href="https://cofacts.tw/reply/1C-n0J8BEY7yIwhp3FTB" target="_blank">查核回應</a></td>
+ <td>2026-07-02 23:55<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>27</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/12nz8vacqg1d5" target="_blank">說藍白賣台，是民進黨的想像; 民進黨的掏空台灣，是一件一件的事實在眼前!  洗錢兩千億的涂誠文 跑了 ▍洗錢兩百億的郭哲敏 跑了 ▍洗錢百億的賭王林秉文 三百萬交保，也跑了 ▍炒作TDR的股市禿鷹鐘文智 判刑30年 這個月也跑了 ▍掏空台鹽…</a><br><a href="https://cofacts.tw/reply/zC-n0J8BEY7yIwhpzFT7" target="_blank">查核回應</a></td>
+ <td>2026-07-28 11:16<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>28</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/9y577p4BEY7yIwhp3AJX" target="_blank">小心这种诈骗手段 （剧情演绎 反诈宣传，无不良引导 请勿模仿） 千万别帮陌生人读卡号！ 哎帅哥，可以帮我个忙吗？ 我这个眼镜坏掉了，我看不清。 你帮我读一下这个卡号可以吗？ 我要转钱给别人。 我写给你就好了。 没有，你你帮我读一下就可以了。…</a><br><a href="https://cofacts.tw/reply/Oy9j0J8BEY7yIwhpVlSU" target="_blank">查核回應</a></td>
+ <td>2026-08-04 21:01<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>29</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ewmcv5bdx9lh" target="_blank">《新時代降臨，什麼都涼了!》  許多歷史文化和生活習慣，將不斷地被快速前進的時代淘汰，或者被不斷變化的社會環境淡化，無奈地走向衰落，直到最後消亡。 01、玉石、翡翠，包括金銀鑽石首飾，許多年輕人不感興趣，穿金戴銀不再被人崇尚，逐漸失去存在的…</a><br><a href="https://cofacts.tw/reply/0y-n0J8BEY7yIwhp2FTR" target="_blank">查核回應</a></td>
+ <td>2026-07-12 18:09<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>30</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1dmi1lx6zxs" target="_blank">【醫院為什麼突然狂推「一日手術」？這背後，其實是台灣醫療體系的大轉變。】  吳金津顧問｜醫療專欄  最近很多人發現：以前開刀要住院3天現在變成：  ☀️ 早上手術 🌙 晚上出院  甚至連： 🫀 心導管 🩺 膀胱鏡 🛏️ 微創手術  很多都開…</a><br><a href="https://cofacts.tw/reply/8i-40J8BEY7yIwhpOlQq" target="_blank">查核回應</a></td>
+ <td>2026-08-02 20:06<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>31</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1ynb9kxnk0erf" target="_blank">戰爭已經進入了全新的階段：  CNN突然曝出驚天消息：現在在戰場上精準打擊俄軍的，根本不是烏克蘭士兵，而是一套可怕的AI指揮系統！  就在5月31日，CNN記者罕見獲準進入烏克蘭國防部情報總局的一個秘密指揮中心，鏡頭掃過的大螢幕上，密密麻麻…</a><br><a href="https://cofacts.tw/reply/9y-40J8BEY7yIwhpPlQV" target="_blank">查核回應</a></td>
+ <td>2026-08-01 15:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>32</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3aealijvgvz1s" target="_blank">🔵在這波「中聯油脂大豆沙拉油致癌物（苯駢芘）超標」的食安風暴中，幸虧有下列幾家未中標：   🔷「里仁（天天里仁）」安全過關、完全沒有被困擾到！  里仁官方已正式發表查核說明公告，確認架上的所有大豆油皆為國外原裝進口，並非中聯油脂製造。 且店…</a><br><a href="https://cofacts.tw/reply/7y-40J8BEY7yIwhpMlQh" target="_blank">查核回應</a></td>
+ <td>2026-08-05 11:17<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>33</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_9oc_Y8B1_U4kWSQEtdl" target="_blank">這個影片大家一定要傳出去 尤其是家裡有女兒一定要傳出去 過去台灣錢淹腳目 但是現在是毒品淹腳目 這是怎麼說的? 我最近有一個做警察的好朋友 傳一份資料給我 說朝鑫哥一定要把這個資料傳出去 讓大家知道 尤其是家裡有女孩子的家庭一定要知道 我說…</a><br><a href="https://cofacts.tw/reply/Ci-60J8BEY7yIwhpRVXM" target="_blank">查核回應</a></td>
+ <td>2026-06-29 20:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>34</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/9midjnigmi5g" target="_blank">究是誰在拼老命去掏空台灣的？      洗錢兩千億的涂誠文溜跑了！ ▍洗錢兩百億的郭哲敏也逃跑了！ ▍洗錢百億的賭王林秉文三百萬交保，也跑掉了！ ▍炒作TDR的股市禿鷹鐘文智判刑30年 這個月當然也是跑掉了！ ▍掏空台鹽11的綠高官陳啟昱地…</a><br><a href="https://cofacts.tw/reply/-y-40J8BEY7yIwhpRVRB" target="_blank">查核回應</a></td>
+ <td>2026-07-28 11:15<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>35</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/17l3zyreaxkj4" target="_blank">諾貝爾文學獎大師馬奎斯在《百年孤寂》中說：「晚年不是被愛，而是要自渡，生命的後半程，你要成為自己的屋簷。」   人到晚年..自己要成為自己的屋簷.就是自己要能保護好自己。晚年是很難得到想像中的被愛的。老伴已老或已走了.兒女當然愛他的父母.但…</a><br><a href="https://cofacts.tw/reply/-i-40J8BEY7yIwhpQVSw" target="_blank">查核回應</a></td>
+ <td>2026-08-01 07:18<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>36</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2wchcycemn7z9" target="_blank">喝咖啡別趁熱！  喝咖啡別趁熱！提供三個溫度數字改變你的每一口你有沒有發現，有時候手沖咖啡放涼了一點反而更好喝？甜感突然出來了，花香也更明顯？  這不是錯覺。2025年5月，雅加達WBC世界沖煮大賽決賽，中國咖啡師彭近洋（喬治隊長）做了一件…</a><br><a href="https://cofacts.tw/reply/_S-40J8BEY7yIwhpSVRa" target="_blank">查核回應</a></td>
+ <td>2026-07-14 20:28<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>37</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3trky7wys06wh" target="_blank">「什麼才叫真正的蛋白質？怎麼吃才對？」  一、什麼叫「真正的蛋白質」？  一句話先定義：  真正的蛋白質，是能被身體拿去「修身體」的，不是帳面上的克數。  很多人最大誤解就在這裡，以為包裝上寫「蛋白質 20g」，身體就真的得到 20g。  …</a><br><a href="https://cofacts.tw/reply/8C-40J8BEY7yIwhpNlRG" target="_blank">查核回應</a></td>
+ <td>2026-08-05 11:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>38</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ni4_Mp8BEY7yIwhph2KJ" target="_blank">警惕新骗局 要多注意了 *剧情演绎 无不良引导 千万不要给陌生人读卡号 嘿，帅哥，可以帮我个忙吗？我这个眼镜坏掉了，我看不清。你帮我读一下这个卡号可以吗？我要转钱给别人。 我写给你就好了。 我没有你，你就帮我读一下就可以了。 看不清是吧？ …</a><br><a href="https://cofacts.tw/reply/_y-40J8BEY7yIwhpUFQc" target="_blank">查核回應</a></td>
+ <td>2026-07-09 22:39<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>39</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/my59-J4BEY7yIwhpOBBp" target="_blank">•阿公阿嬤請注意!! 台北市敬老卡史詩級進化。 敬老卡 今年7月起 P 每月 480點→600 點 124H 明年下半年) 二代卡上路 農會业 搭公車 超商 超市 藥局 農會 更便利 更好用 更實惠 更貼心 點數可累積到下個月10) 沒用完…</a><br><a href="https://cofacts.tw/reply/_i-40J8BEY7yIwhpTFTl" target="_blank">查核回應</a></td>
+ <td>2026-07-13 20:37<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+</table>
+</details>
+
+<details><summary><b>待排查(458)</b></summary>
+<table><tr><th>#</th><th>回報人數</th><th>訊息內容(摘要)</th><th>最後回報時間</th><th>備註</th></tr>
+<tr>
+ <td>1</td>
+ <td class="num">67</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAA_-G_8YPxj_EP8QPxAHmD-X_5A9gAGwB_Af8f_MAA" target="_blank">榮總醫院內科主任 吳文清醫師 實驗報告 今天喝了冰的58c 高梁酒了嗎?… 如果以前不喝,今天開始為了健康; 我們都必須嘗試跟 58c度高梁酒做朋友了, 不過千萬不要過量... ***** ******** 冰的 58c 高梁酒可以救你一輩…</a></td>
+ <td>2021-09-29 17:56<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>2</td>
+ <td class="num">67</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8AD_4P_g-AD_kvgA_oD-AP0A_7D8AP4A_gD_FP8A_AA" target="_blank">0918715002 千萬不要接喔 接了就要付 傳下去助無限 $79000元 </a></td>
+ <td>2020-12-19 20:07<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>3</td>
+ <td class="num">67</td>
+ <td class="txt"><a href="https://cofacts.tw/article/r__hw8AppAGiM7yd4cWwB4kDwIHhw-v_gxfAAAf_B_8" target="_blank">資訊分享: 成大抗體新藥研究中心主任張明熙博 士,她和團隊研發的阻斷介白素-20單株 抗體,證實可治療類風濕關節炎及骨質疏 鬆症,新藥技術已轉國際知名大藥廠,以 四億元創下台灣技轉金新紀錄。她特別提 到千萬不能吃糖, 除了黑糖有豐富的礦 物…</a></td>
+ <td>2025-05-14 17:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>4</td>
+ <td class="num">66</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAAB_D_8L_4_vD-AgAGbezn8ch7OA9ATQABwDvAP__8" target="_blank">@ 麻煩您分享此標誌! 它表示戴著口罩並帶有此標誌的人 是聾啞人士,在某些情況下還戴著 助聽器。 在這個艱困的新冠疫情時 代,他們看不到嘴唇說話,這對他 們來說非常困難。 很少有人知道此 標誌的含義。 聾啞人和聽力不佳的人會感謝您。 謝謝!…</a></td>
+ <td>2021-07-23 12:51<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>5</td>
+ <td class="num">66</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__8ADwAH1CeUAdVflUW1VYQhzmHOYfFfAA-B_wB_kP8" target="_blank">18國暫停接種 AZ 阿斯利康/牛津疫苗 歐洲國家 愛爾蘭 冰島 委內瑞拉 丹麥 挪威 荷蘭 德國 法國 斯洛文尼亞 奧地利 羅馬尼亞 葡萄牙 西班牙 意大利 保加利亞 南美洲國家 非洲國家 亞洲國家 MEDICAL INSPIRE. 剛果…</a></td>
+ <td>2021-07-13 09:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>6</td>
+ <td class="num">66</td>
+ <td class="txt"><a href="https://cofacts.tw/article/P_x__kAOAALP49EDw8PIQ7_iv-KfAoAC-z_AJ8BnwAc" target="_blank">中華電信 4G 16:55 +886 916-183-586&gt; 訊息 13:48 包裹已派發.請您 及時查收.http:// wexcv.xyz 65% </a></td>
+ <td>2020-04-12 01:47<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>7</td>
+ <td class="num">65</td>
+ <td class="txt"><a href="https://cofacts.tw/article/PJtQ3I0BBMtPEaE05AS7" target="_blank">有六種食物,你在冬天吃的時候盡量不要二次加熱 吃不完不要怕浪費就丟了吧 記得點讚收藏 第一個就是蘑菇,菌類的食物在二次加熱之後 它的亞硝酸鹽含量會翻倍 第二就是海鮮,放久了再加熱會產生蛋白質的降解物 這種物質對我們的肝臟傷害是很大的 第三是…</a></td>
+ <td>2024-12-30 00:56<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>8</td>
+ <td class="num">64</td>
+ <td class="txt"><a href="https://cofacts.tw/article/g_-AM4D_AD_____vAAAAANgH0B_AD8H3HxgIHB-8H_g" target="_blank">政府新式照相機。 8顆鏡頭+中間的紅外線發射燈,只要你在紅燈 下使用手機包你中彈。 請記得別在停紅燈時看手機 機車1000 汽車3000 規機車駕駛人行駛道路以手持方式使用行動電話進 行數據通訊 第31之1條2項0款(期限內自動繳納處新台幣…</a></td>
+ <td>2021-09-13 22:50<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>9</td>
+ <td class="num">64</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_88ADwA_BD8cIPwnBL_8I4Th_CHcLwQ_hCcEDzQ5_-k" target="_blank">德國在臺協會3小時前發話, 疫苗購買非國家掌控 德國在台協會看不下去說話了! 我確信,透過政府與人民共同 買疫苗並非政府掌控 的努力,必能再次控制住疫 情。我感謝許多各界人士,尤 其是醫護人員,不眠不休站在 第一線執行任務,自身亦承受 而是…</a></td>
+ <td>2021-07-02 08:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>10</td>
+ <td class="num">63</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1xt5bt5lb6wzw" target="_blank">https://popolist999.blogspot.com/2021/06/google.html?m=1</a></td>
+ <td>2025-02-26 07:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>11</td>
+ <td class="num">62</td>
+ <td class="txt"><a href="https://cofacts.tw/article/xz2n5tc226x5" target="_blank">轉傳給在美國的朋友 你有用 Zelle transfer money 嗎？最近詐騙很多，下面這個 video, 給大家做參考，大家小心。  Rule of thumb 就是不要回覆任何有關財務的簡訊；直接去銀行詢問.  我已經幾次收到自稱是…</a></td>
+ <td>2024-12-07 13:20<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>12</td>
+ <td class="num">62</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__nwA_gzgAEAAIZ9Mkn__wAJ5_8ACefvIAHn_yAJ5_8" target="_blank">疫苗名稱 輝瑞 莫德納 嬌生 5種疫苗差在哪? AZ 疫苗種類有效性 施打劑量 保存溫度 mRNA 諾瓦瓦克斯重組蛋白 mRNA 95% 94.1% 2劑 2劑 89.3% 2劑 腺病毒載體 72% 腺病毒載體 70.4% 1劑 -70°C…</a></td>
+ <td>2021-06-28 22:08<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>13</td>
+ <td class="num">61</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AP8AfwD_AP8B_z__mfAAAAAGACO_f7-8qY-An_7_AAA" target="_blank">停水時,住宅須知: 1.透天住宅抽水馬達要關閉; 2.水塔用空前要將ro機關閉; 3.自動進水飲水機關閉; 4.儲水式電熱水器關閉 等供水後再依序打開; 確定水塔有水可進後才可以打開2-4項。避免熱膽空 燒損壞! 停水週期 高雄全區 55停…</a></td>
+ <td>2021-04-22 20:36<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>14</td>
+ <td class="num">61</td>
+ <td class="txt"><a href="https://cofacts.tw/article/v-eEAYZHhR-EMf__AYQNVQT_Af8H_wAw7AB_-H8Ae4A" target="_blank">屬於你的 75 折 記得與親友分享! A15120000011 11/30 截止 不限次數喔 活動期間:即日起~2018/11/30 活動內容:周一至周五憑本優惠QRC至王品集團旗下指定餐廳,可享專屬優惠 同桌套餐享75折 王品牛排、西堤牛…</a></td>
+ <td>2018-11-28 15:57<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>15</td>
+ <td class="num">61</td>
+ <td class="txt"><a href="https://cofacts.tw/article/y3rzyf6xx55l" target="_blank">https://www.chinatimes.com/realtimenews/20250203000840-260404</a></td>
+ <td>2025-06-09 15:36<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>16</td>
+ <td class="num">60</td>
+ <td class="txt"><a href="https://cofacts.tw/article/791qi3ww3hi9" target="_blank">認識這一家人吧！無惡不作  在東北的岸信介有著一個外號叫“滿洲之妖”，因為他撥了大款資金給731部隊，供他們做非人類的人體實驗。他利用“滿鐵”總裁和日產總裁的關係讓他們兩大集團的資金用來支持731部隊的建設，而東條英機大量地抓人送往731部…</a></td>
+ <td>2024-01-21 14:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>17</td>
+ <td class="num">60</td>
+ <td class="txt"><a href="https://cofacts.tw/article/A_8D_wDHI8EABwA_DZ9vfyd_hVvHOQMQH_QPNLAeD6I" target="_blank"></a></td>
+ <td>2021-05-26 08:28<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>18</td>
+ <td class="num">60</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ED8AHwH_B78YHyQfYR9sH2gvZC9gXzA-AH4B_gH9A_s" target="_blank"></a></td>
+ <td>2022-08-04 20:12<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>19</td>
+ <td class="num">60</td>
+ <td class="txt"><a href="https://cofacts.tw/article/vHMNiZEBd3gcY0LpP3IP" target="_blank">吃的第一口東西會大幅決定你飯後的血糖量嗎? 我前幾天才看到一個研究 就是科學家把得了第二型糖尿病的病人分成兩群 其中一群先吃澱粉再吃蛋白質跟青菜 另外一群的人就是先吃了青菜蛋白質最後才吃澱粉 結果科學家把這兩群人的飯後血糖來測驗 就發現先吃…</a></td>
+ <td>2025-04-26 07:21<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>20</td>
+ <td class="num">60</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1r0xq9h4tql2m" target="_blank">★方恩格在頭條被洗臉後删文了 ★前兩天美國共和黨前亞太區主席Ross方恩格，因為巴以冲突的相關話題，在頭條上指責中國網友不同情猶太人的言論，引起了大家的討論。一個路人網友看到後，引經據典，一口氣寫了一篇長文，給這位猶太裔美國共和黨成員上了一…</a></td>
+ <td>2025-06-29 06:54<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>21</td>
+ <td class="num">60</td>
+ <td class="txt"><a href="https://cofacts.tw/article/DGMP_o4BUCqzrknpqkAR" target="_blank">人造雞蛋 </a></td>
+ <td>2024-08-20 15:39<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>22</td>
+ <td class="num">58</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1w1ht7avvehyf" target="_blank">https://youtu.be/uaPS0VvXOzw</a></td>
+ <td>2026-02-28 18:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>23</td>
+ <td class="num">57</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gA_f94H_gAHnA4Kj4Af8H6gPqD_8H4AHAAOEAf_j__E" target="_blank">市自來水公司提醒: □未分类 08:12 市自來水公司提醒: 疫情非常时期,自来水中处理过程中在允许 的范围内加大了氯气的注入。请大家在用水 时,特别是烧开水、煮饭用水前要把水装出 来,最少静置两小时以上再用。这样会更健 康! ~~~这条消…</a></td>
+ <td>2020-03-18 09:16<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>24</td>
+ <td class="num">57</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AQB-AP_w__A9wEcgf-B94H_wf-BtcGAAf_BAAH_wf4A" target="_blank">行政院振興三倍卷 三 使用期限至 109年12月31日止 200200 500 使用期限至 109年12月31日止 500600 今天下午1:53 中華民國 振興三倍券 行政院 中華民國 振興三倍券 行政院 A 1000000 消費時 •不…</a></td>
+ <td>2020-07-09 14:54<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>25</td>
+ <td class="num">57</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1eaNLpQBYrjt7MSMj4f6" target="_blank">ㄟ唐哥這吐司很好吃耶 我之前有時候會買 我很久以前也會買 但我知道它有兩個成分以後 我再也不買超商的麵包了 如果有常在買超商麵包的好朋友 你仔細看喔 有兩樣東西的千萬不要買 脂肪酸的甘油脂 還有這個麥芽糊精 為什麼? 脂肪酸甘油脂就是俗稱的…</a></td>
+ <td>2026-01-03 08:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>26</td>
+ <td class="num">57</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2y4jsm18axq6j" target="_blank">https://youtu.be/-7BYN_rZ6vo</a></td>
+ <td>2021-06-09 12:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>27</td>
+ <td class="num">57</td>
+ <td class="txt"><a href="https://cofacts.tw/article/VXPimJEBd3gcY0LpCYou" target="_blank">2024年十大科技榜單出爐,其中第一名完全顛覆你的想像。 第十名,拉裂式超可貼。拉裂式超可貼是小發明大作用的典範, 一貼一拉無需縫針,傷口就能閉合,傷者可以自己在家輕鬆處理, 而無需前往醫院進行手術,不僅省了錢,還大大解清了痛苦。 第九名,…</a></td>
+ <td>2025-01-20 18:24<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>28</td>
+ <td class="num">56</td>
+ <td class="txt"><a href="https://cofacts.tw/article/f46AAYADf__S_0AuQf5Ajv8G_APAJwB_AyD_If_PQcA" target="_blank">打疫苗為何造成血栓? 病毒 (片段) 進入血管, 血液中的纖維蛋白原(Fibrinogen) 變成纖維蛋白(Fibrin), 大量聚集就變成血栓 病毒 (片段) 在心臟 → 造成心肌梗塞 在肺臟 → 造成肺栓塞 大愛電視 Da Ai Tel…</a></td>
+ <td>2021-07-26 17:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>29</td>
+ <td class="num">56</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__zFFMKUxBQH_H_8AfgAOPx5_HGA0bIBtgH_D4QfgB8" target="_blank">這台車,專門偷拍,檢 舉違規的,王八車,分 享出去,讓他红遍,台 灣各地。 9065-YJ </a></td>
+ <td>2023-03-03 19:15<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>30</td>
+ <td class="num">56</td>
+ <td class="txt"><a href="https://cofacts.tw/article/dWCIHpIBv9BhVxGki0ac" target="_blank">寄生蟲最多的四種食物,用開水煮都煮不死,危害非常大,但是有很多人就是喜歡吃,那為了全家人的健康,您一定耐心看完這條視頻。 大家好,我叫蘇勇,西北農林大學03級本碩聯讀的研究生,我大學學的就是食品安全工程,從畢業到現在一直在食品研究院做相關檢…</a></td>
+ <td>2024-11-14 19:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>31</td>
+ <td class="num">56</td>
+ <td class="txt"><a href="https://cofacts.tw/article/DXFRCZABd3gcY0LppB8H" target="_blank">在網際網路上傳播的影片的逐字稿，， 內容如下， 在網際網路上傳播的影片的逐字稿，， 內容如下， 在網際網路上傳播的影片的逐字稿， 內容如下， 在網際網路上傳播的影片的逐字稿， 內容如下， 在網際網路上傳播的影片的逐字稿， 內容如下， 在網際…</a></td>
+ <td>2024-12-18 07:55<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>32</td>
+ <td class="num">56</td>
+ <td class="txt"><a href="https://cofacts.tw/article/23me99w72gsey" target="_blank">上海二医82届一大班的吴承琮(游泳队的) 他是南加州急诊科医生，感染了新冠病毒，住院了十二天回家。身为医生又是新冠患者的他第一手资料, 在病房里的随笔, 情真意切, 文笔流畅。供大家参考。  大戰病毒第一周： 2020年歲末，我、一位年近6…</a></td>
+ <td>2021-02-22 13:46<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>33</td>
+ <td class="num">56</td>
+ <td class="txt"><a href="https://cofacts.tw/article/llsrcg8otxlm" target="_blank">剛才收到了網友發來的一個非常有趣的《2025年新版數學遊戲題》，有點奇怪，有點意思，真好玩，新年啦，現轉發，雅俗共賞，供大家樂一樂，高興高興!!!  題目是：「凡是世界上無論國內外持有手機的任何人，他的年齡與他的手機號碼之間的關係，都是綁定…</a></td>
+ <td>2026-01-26 17:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>34</td>
+ <td class="num">56</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1n99jhr60td3o" target="_blank">如果消息「屬實」，這是連前蘇聯都沒有做過的「壯舉」，中國「超級」特混艦隊逼近美國本土，震驚全世界！ 美國號稱史上最大規模的黃海軍演如期在中國家門舉行，美國此舉就是以通過威脅中國重要政治和經濟中心，威懾中國！ 僅距離24海裡，真的太凶險了！這…</a></td>
+ <td>2024-07-27 10:05<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>35</td>
+ <td class="num">55</td>
+ <td class="txt"><a href="https://cofacts.tw/article/Zvl5jYcBn6k8q-JU_dPb" target="_blank"></a></td>
+ <td>2023-08-20 08:27<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>36</td>
+ <td class="num">55</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2xja0nfy1r4vs" target="_blank">～真相應當紀錄，紀錄這些人作惡多端還裝模作樣地做人，讓他們去面對歷史。～  丁紹傑 ＜卡管案該出書 感謝陳維昭校長＞  2009年，當過十二年台大校長的陳維昭在出版回憶錄爆料，前總統李登輝與陳水扁執政時，都曾插手「喬」台大醫院院長人事，遭到…</a></td>
+ <td>2024-10-21 22:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>37</td>
+ <td class="num">54</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2owmzvfj8j7nj" target="_blank">我是施麗媛，看同學的發言，有些話不吐不快！美國並不是在超市打vaccine，而是在許多超市有附設藥局，你可以在藥局預約打疫苗！老早在全美(加州)就可以在COSTCO、Safeway等超市藥局、及一些連鎖藥局如CVS、Walgreen預約打所…</a></td>
+ <td>2021-06-17 14:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>38</td>
+ <td class="num">54</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AP8A_z__AAHqef-_iEGAAYkn-_8AAQN-H_5BlH_-AAA" target="_blank">Tsai Ing-wen @iingwen My heart goes out to all those affected by the tragic building collapse in south Florida. On behal…</a></td>
+ <td>2021-07-10 09:13<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>39</td>
+ <td class="num">54</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_-NRPnCGYAaZB5QHlGeeZ5xnlAfSD_CHcQp__nw-AAE" target="_blank">請牢記並分享 日本作家村上春樹曾說:「人不 是慢慢變老的,而是一瞬變老 的。」 人變老,不是從第一道皺 紋、第一根白髮開始,而是從放 棄自己那一刻開始;只有對自己 不放棄的人,才能活成「不會老 」。 有一種人,歲月好像遺忘了 他們,一輩子似…</a></td>
+ <td>2025-08-29 08:51<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>40</td>
+ <td class="num">54</td>
+ <td class="txt"><a href="https://cofacts.tw/article/7v8NvwEHCAMCO4IPnx9GTwAPD_9E_k5gPwC_AL98uiA" target="_blank">公的 吃了半輩子的番茄了, 今天才知道︰ 六葉是“公”的 五葉是“母”的; 公的吃着酸,母的吃着甜! </a></td>
+ <td>2024-04-30 13:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>41</td>
+ <td class="num">53</td>
+ <td class="txt"><a href="https://cofacts.tw/article/___Bs4ADgBPAIcEDgwf__4BDwAO0j5__gAGAAYP___8" target="_blank">這是昨天下午月亮在北極的 俄羅斯和加拿大邊境,從上 升到落下大約30 秒,然後遮 檔太陽5秒,然後立即落下... 如果没有互聯網,也許我們 這一輩子都看不到這自然奇 觀。 原來這就是:日月交替,斗 轉星移... </a></td>
+ <td>2022-03-13 20:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>42</td>
+ <td class="num">53</td>
+ <td class="txt"><a href="https://cofacts.tw/article/D5ur440BBMtPEaE0wA_H" target="_blank">假的啦 來,這是假的烏拉魚喔 假的烏拉魚啦,你看 有彈性的啦 中間有塑膠啦 你看你看你看 你要看喔 大家市場要注意喔,不用騙他喔 對啊 要注意喔,我無良心的心理人 全部都是假的啦 你看你看你看 你看看看,有沒有 來 這都是塑膠做的 都薄薄的…</a></td>
+ <td>2024-09-06 10:35<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>43</td>
+ <td class="num">53</td>
+ <td class="txt"><a href="https://cofacts.tw/article/z2uqc5jjbzqr" target="_blank">《上天的奇蹟！ 》  1995 年，美國發生的一件真實故事：  一位名叫大衛的經商者，因為洽公需要開車要到紐約，路程中夜深了，又異常疲倦，趕緊下高速公路找地方睡覺，勉強在附近養老院裡找到床位讓他暫住一晚。 第二天要離去時，他突然心有感的問院…</a></td>
+ <td>2025-10-20 17:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>44</td>
+ <td class="num">53</td>
+ <td class="txt"><a href="https://cofacts.tw/article/mELGsp0BYNn_1SiYw4kj" target="_blank">你知道最近又出現一種新型的騙局嗎？比電信詐騙還要可怕，一不小心，就讓你傾家蕩產，十個有八個中招，而且還不分男女。這一支影片非常重要，你一定要耐心的看完。  我朋友就跟我說，他在西門町逛街的時候，他差一點中招。有一個大姐拿著手機跑過來跟他說：…</a></td>
+ <td>2026-06-18 09:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>45</td>
+ <td class="num">52</td>
+ <td class="txt"><a href="https://cofacts.tw/article/g7jAGPE-6T7gPcAf4A_7DPsG8Azw2PDw8GDwKPB49vg" target="_blank"></a></td>
+ <td>2021-03-29 09:48<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>46</td>
+ <td class="num">52</td>
+ <td class="txt"><a href="https://cofacts.tw/article/i_rezIcBn6k8q-JU1htZ" target="_blank"> 今天,我們要來看看 how the earthing or the grounding affects your blood.  我們要拿她的血,放在麥克風鏡頭上,然後看看。  As you can see, all her red bl…</a></td>
+ <td>2024-07-24 16:21<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>47</td>
+ <td class="num">51</td>
+ <td class="txt"><a href="https://cofacts.tw/article/f_gwOD-4AwzD_B_8AL4AHuP-4b7AJsAG4P7APgP-AD4" target="_blank">訂 收文編號 136 收文日期 140.6.23 中華民國醫師公會全國聯合會 西醫基層醫療服務審查執行會 函 受文者:西醫基層醫療服務審查執行會各分會 發文日期:中華民國110年6月23日 發文字號:全醫基審字第1100000058號 速別…</a></td>
+ <td>2021-07-10 23:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>48</td>
+ <td class="num">51</td>
+ <td class="txt"><a href="https://cofacts.tw/article/D5s8FI4BBMtPEaE0vuAv" target="_blank">這則是在網際網路上傳播的影片的逐字稿。內容如下， 這則是在網際網路上傳播的影片的逐字稿。內容如下， 這則是在網際網路上傳播的影片的逐字稿。內容如下， 這則是在網際網路上傳播的影片的逐字稿。內容如下， 這則是在網際網路上傳播的影片的逐字稿。 …</a></td>
+ <td>2025-03-02 19:17<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>49</td>
+ <td class="num">51</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2ycsiwzov8fdt" target="_blank">Facebook https://www.facebook.com 現在已有六輛車報 案,如果有人拿著 名片,敲你車窗向 你問路,絕對不能 開窗。因為名片後 有刀片要割你的 臉,然後搶劫。千 萬要小心!請大家 幫忙轉發一下 吧!没開車也 轉…</a></td>
+ <td>2024-08-05 13:25<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>50</td>
+ <td class="num">51</td>
+ <td class="txt"><a href="https://cofacts.tw/article/aN8G3wb8AJwC3hHwwP5h_AD8EP8A_wD_AP8A9wH5g_w" target="_blank"></a></td>
+ <td>2021-02-27 23:19<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>51</td>
+ <td class="num">51</td>
+ <td class="txt"><a href="https://cofacts.tw/article/LmAdHZIBv9BhVxGkIUMG" target="_blank">傷害腎臟的五大食品 我先從第五名講好了 我不要從第一名 第五名 肉鬆 非常傷腎 第四名 鐵板麵 很好吃 非常傷腎 第三名 炸雞 非常傷腎 第二名 日本之光 叫做拉麵 拉麵非常傷腎 特別大家吃拉麵的時候 那個湯不是讓你在喝的 拉麵吃完 把那碗…</a></td>
+ <td>2025-11-29 15:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>52</td>
+ <td class="num">51</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8rc576zcm38g" target="_blank">死的支架，活的血管    一個健康的人接受體檢，常被告知心臟有血管堵塞要做支架， 當事人進退兩難 ，他覺得自己明明很好！     血管是活的， 它無時無刻因應身體做寬窄的變化，  支架是死的，永遠固定口徑，所以當人在運動需要增加血流量 時沒…</a></td>
+ <td>2025-08-19 13:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>53</td>
+ <td class="num">50</td>
+ <td class="txt"><a href="https://cofacts.tw/article/6yhgk6m4uao5" target="_blank">([)退休軍公教警消重大權益事項說明請看完後廣傳(])(:) 最近有一則關於([)夫妻雙方都是退休軍公教警消(]) ([)一方往生後(])， ([)另外一方還有一筆錢可以領(])的傳言， 一直在退休軍公教的群組傳來傳去， 全退盟有必要把這件…</a></td>
+ <td>2024-07-05 05:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>54</td>
+ <td class="num">50</td>
+ <td class="txt"><a href="https://cofacts.tw/article/S_feVI0BAjOeMOkl1LbZ" target="_blank">告訴你壹個天大的秘密 99%的人都不知道 垃圾食品它竟然還有解藥 趕緊關註收藏 並轉發給妳的親人朋友 油炸食品的解藥是豆漿 所以豆漿油條永遠是好搭檔 火鍋的解藥是柚子 臘肉的解藥是綠茶 燒烤的解藥就是生吃西紅柿 膨化食品的解藥是芹菜 泡麵的…</a></td>
+ <td>2025-06-26 10:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>55</td>
+ <td class="num">50</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3rct0n9s4jqxr" target="_blank">現在高速公路上，跨越公路之陸橋上，己改成用高清科技執法錄影，替代人員拍照了。 看到陸橋請減速唷</a></td>
+ <td>2025-06-15 15:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>56</td>
+ <td class="num">50</td>
+ <td class="txt"><a href="https://cofacts.tw/article/bmTXfI8BUCqzrknp6gXX" target="_blank">我是大學生兼職能不能幫我填個表格 然後填好了這個禮品拿給你們 不是你這都個人信息不能亂填的 不好意思這幫不了了 這個信息可以填假的 老闆你幫幫忙嘛 我這個大學生兼職 而且我老闆說完成不了業績 不讓我回家過年 不是你這種信息我不能亂調吧 你幫…</a></td>
+ <td>2024-09-09 19:51<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>57</td>
+ <td class="num">50</td>
+ <td class="txt"><a href="https://cofacts.tw/article/I2ovVogBvEj1WkaUdKWT" target="_blank">﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ ﹔ …</a></td>
+ <td>2023-06-29 20:55<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>58</td>
+ <td class="num">49</td>
+ <td class="txt"><a href="https://cofacts.tw/article/y6hc260h2495" target="_blank">♦️ 蔡正元 👍  告訴徐國勇ㄧ點知識  民進黨秘書長徐國勇說 麥克阿瑟是「同盟國亞洲地區統帥」 他下令「中國戰區統帥」蔣介石 「代表同盟國接收台灣」 因爲「蔣介石是麥克阿瑟的下屬」  徐國勇的說法證實他是一頭「長毛象」 真的有夠無知  第…</a></td>
+ <td>2025-10-03 09:34<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>59</td>
+ <td class="num">49</td>
+ <td class="txt"><a href="https://cofacts.tw/article/zREMs44B0DEb0v6cjjBl" target="_blank">字幕由Amara.org社区提供 字幕由Amara.org社区提供 字幕由Amara.org社区提供 字幕由Amara.org社区提供 字幕由Amara.org社区提供 字幕由Amara.org社区提供 字幕由Amara.org社区提供 字…</a></td>
+ <td>2024-08-23 20:39<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>60</td>
+ <td class="num">49</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_-NRPnCGYAbJB0QHxGfeZ_wn8AfwDvCGcQp__nw-AAE" target="_blank">日本作家村上春樹曾說:「人不 是慢慢變老的,而是一瞬變老 的。」 人變老,不是從第一道皺 紋、第一根白髮開始,而是從放 棄自己那一刻開始;只有對自己 不放棄的人,才能活成「不會老 」。 有一種人,歲月好像遺忘了 他們,一輩子似乎都不會老;這…</a></td>
+ <td>2025-07-21 13:08<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>61</td>
+ <td class="num">48</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__82_wAAUID7xPoO7AD-AAAAAAC_____gA8AEYf_h_8" target="_blank">這消息台灣媒體有人說嗎 Why Taiwan&#x27;s COVID-19 Defenses Finally Faltered A Lions Club meeting and tea houses in Taipei&#x27;s... time.com …</a></td>
+ <td>2022-01-21 23:51<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>62</td>
+ <td class="num">48</td>
+ <td class="txt"><a href="https://cofacts.tw/article/t__-NwAFgAVgBWAlcrd_p3_n5YUBoQWlAi0mLzQ_8Hk" target="_blank">自救,必讀 好友請一定要看 要從低層往高層按) 這是電梯急墜自救法, 人人都有可能要坐電梯, 不要按贊請你轉發讓每人都知道 電梯急墜自救方法, 功德無量, 也許看一眼就能保護你最愛的人。 LINE Camera x </a></td>
+ <td>2023-05-07 15:20<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>63</td>
+ <td class="num">48</td>
+ <td class="txt"><a href="https://cofacts.tw/article/udzlarvbje2g" target="_blank">https://wantrich.chinatimes.com/news/20240201900002-420501</a></td>
+ <td>2024-09-23 17:17<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>64</td>
+ <td class="num">48</td>
+ <td class="txt"><a href="https://cofacts.tw/article/30yv2dgb06xja" target="_blank">1986年，時任新加坡發展部長“鄭章遠&quot; 被查出私受 50萬賂款。  鄭章遠乃是新加坡元老，與李光耀私交甚厚，事發後立刻找李光耀求情。  結果李光耀冷冷一句 :  我若幫你，新加坡就完了。 最終，被李光耀斷然拒絕的鄭章遠， 選擇了 &quot;自盡&quot;…</a></td>
+ <td>2025-07-18 14:14<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>65</td>
+ <td class="num">48</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8l8vxgrqdo6m" target="_blank">https://youtu.be/ZS571kxDcVw?si=Dvooj5LiOqrFRUxu</a></td>
+ <td>2025-04-22 23:43<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>66</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAAf-A8OP_8_kwMxwRsPH98fBwHPHwcBz58HDwVKJR4" target="_blank">AZ副作用對策懶人包 AZ |疫苗 疫苗 常見副作用 腫 痛 倦 燒Ⓡ 吐 林局長(藥師)製圖 接種部位腫脹 (1/10~1/100) 接種部位疼痛 (54.2%) 頭痛(52.6%) (44.0%) 關節痛(26.4%) (53.1%) …</a></td>
+ <td>2021-07-20 11:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>67</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAD_v8H_wAfAAcD_wD_Md8APwg_nwcHnwCff8f_xAAA" target="_blank">台灣大哥大 16:22 榮總醫師的貼文: 新冠肺炎在還沒有來到肺部之前, 它會在喉嚨部位存活4天。 在這個時候,人們會開始咳嗽及喉痛。 如果他能儘量多喝溫開水及鹽巴或醋, 就能消滅病菌。 儘快把此訊息轉達一下, 因為你會救他人一命! 請轉發…</a></td>
+ <td>2022-05-16 08:04<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>68</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3m9zsyn5312t8" target="_blank">轉傳同仁的提醒： 昨天下午我在美國的同學又好意打電話給我，提醒我應盡一切努力不要染疫。他說他有三個朋友已經不敵病毒死了，沒死的染疫者也有後遺症；例如：以前跑步1小時沒問題，現在跑10分鐘就喘到不行。  他再告誡我，無論政府如何放鬆，自己都不…</a></td>
+ <td>2022-05-26 00:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>69</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__8P_wADAAEAJQg_-D_4H_g_4AfeA8APwg-DB4c_yZM" target="_blank">好巧…… 原來掏空國人資產100多億的 經理人:好巧...剛好是民進黨秘書 長邱義仁之子邱南璋 管理 搬錢方式 台杉投資管理顧問股份有限公司 資本額:1.26億元 設立時間:106. 08, 25 50萬公司管59億資金?管理 台杉水牛一號…</a></td>
+ <td>2021-12-09 05:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>70</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gB7g3wPOB-5XoPugBzAP9g8uDDsBfwF_cT8ABvE_4B8" target="_blank">Lv53 矮油老豬 ID:370115428646250086(7) 正統續作 並肩破關 經典組隊 並肩聞關 叢林(3-1初入叢林) | 529460 @KONAMI </a></td>
+ <td>2019-06-07 18:01<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>71</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_vjA6gABo7-BH4sPjw-DD68PhwOhD6GPjw-PD4EHow8" target="_blank">新冠病毒可在物體表面存活的時間 新冠病毒存活時間 物體表面 紙張跟衛生紙 3小時 銅(例如錢幣) 4小時 紙箱 24小時(1天) 木材､木板 48小時(2天) 衣服 48小時(2天) 48~72小時(2~3天) 72小時(3天) 96小時(…</a></td>
+ <td>2021-06-15 12:17<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>72</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2dt0q2qb0jr75" target="_blank">🍎🌻🌳🌺🏵️🍏🍓       周杰倫的傳奇  周杰倫，萬千青少年， 為他的歌聲而癡迷的， 一位天皇巨星， 對母親葉惠美， 有著似海深情， 因為在他， 最孤獨最無助的時候， 是媽媽用溫暖， 愛的臂膀支撐著他。  所以周杰倫一直說， 「只要媽媽…</a></td>
+ <td>2024-10-02 13:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>73</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3t0le0xt7q9hc" target="_blank">人壽過73、闖84坎的祕密、太漲知識了  2022-01-11 14:53  古人有個說法：人生七十三、八十四閻王不叫自己去。  這道門坎約有半數以上的人，即使還能活在世上，但多有病痛在身。《黃帝內經》：“人盡其天年，度百歲乃去。”  影響…</a></td>
+ <td>2025-11-19 08:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>74</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1ksffyq2fjkna" target="_blank">https://youtu.be/okPE2UhlG6c?si=o5QuMd3YFeCgCX7z</a></td>
+ <td>2025-08-26 20:09<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>75</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/riktgIkBFLWd9xY2PJnB" target="_blank">新加坡太狠了 最近做了兩件讓人匪夷所思的事情 竟然對糖和米飯都下手了 首先第一件事就是新加坡政府禁止廣告宣傳糖和高凡這類飲料 然後給糖分為4個等級ABCD 4個等級 代糖飲料也就是無糖可樂、無糖選被等的止冷品到B級 而A級的飲料是寥寥無幾 …</a></td>
+ <td>2025-06-28 08:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>76</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3gaz9msaeu21z" target="_blank">今天7/14上午高雄製作鋁電廠火災，毒氣體已飄至潮州、萬巒、竹田、沿山公路鄉，東港、萬丹、新園區內，今天開始下雨勿淋雨，若淋到雨後請趕快沐浴更衣。若未說到的地區同樣不樣淋到雨，因風向不確定。很緊急。快傳週邊朋友。謝謝</a></td>
+ <td>2025-07-24 10:54<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>77</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/xj3xnm25uz6d" target="_blank">藍白亂砍總預算 癱瘓政府 高達7個中央部會 預算被超刪 史無前例惡搞，台灣人民當然要大罷免  https://www.facebook.com/share/p/19ALBovfBw/?mibextid=wwXIfr</a></td>
+ <td>2026-04-11 23:00<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>78</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/20eu1ii08cjz5" target="_blank">陳月卿  【寫給60+的你】  雕塑大師朱銘突然選擇離世，讓許多喜愛他作品的粉絲為之心碎、不捨，據說原因是久病。 前不久，一位年方62歲的學界朋友突然墜樓死亡，警方在現場發現遺書，文中表示因「腦部病變，智能已失，無法進行教學、研究」，令認識…</a></td>
+ <td>2025-03-23 07:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>79</td>
+ <td class="num">47</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3a5w7zp8yrtu7" target="_blank">😱新公司招待~免費廉價旅遊... 😱好友約-去工作賺錢... 👉越南..泰國.. 菲律賓..緬甸...    😭請廣傳😭</a></td>
+ <td>2025-01-25 18:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>80</td>
+ <td class="num">46</td>
+ <td class="txt"><a href="https://cofacts.tw/article/hmb929adqxir" target="_blank">台鐵為什麼5/1要停 這幾天打開新聞，都說5/1號台鐵停駛不加班，是吵著要加薪嗎？還是怕公司化會失去公務員身分ㄚ？ 我是台鐵員工，如果你有以上問題，歡迎你看這篇文章。 你可以不贊同我們的行動，但希望你知道我們在反對什麼。 工會完全不反對公司…</a></td>
+ <td>2023-04-30 22:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>81</td>
+ <td class="num">46</td>
+ <td class="txt"><a href="https://cofacts.tw/article/v4edA9wB_AH-gd0D_AH4A8PHz-CfIB-AvnAfYP8B8AM" target="_blank"></a></td>
+ <td>2024-06-15 14:09<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>82</td>
+ <td class="num">46</td>
+ <td class="txt"><a href="https://cofacts.tw/article/CYtUF4QBv5it-Cx_Looe" target="_blank">剛剛公開,口渴意味著忍痛和提前死亡。 晚上喝白苔水的朋友,再不看就晚了, 看完趕緊轉發收藏起來,很快就刪了。 美國著名醫學博士巴特曼,畢生致力於水的研究。 根據自己多年的臨床經驗,發現了一個震驚世界醫學界的秘密。 許多疾病的原因,僅僅是身體…</a></td>
+ <td>2025-01-15 14:54<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>83</td>
+ <td class="num">46</td>
+ <td class="txt"><a href="https://cofacts.tw/article/Js-CNooBrkRFoI6r58XL" target="_blank">秋天送你第一杯奶茶的都是要你命的。 親自給你熬一碗豬油的都是非常愛你的。 法國菜的靈魂是牛油, 中國菜的靈魂一定是豬油。 但是由於資本家大量的控制 非常短期就可以收穫的植物油, 他們就大量的去寫各種的報紙、 報章、雜記找傳位的人說 植物油才…</a></td>
+ <td>2025-04-22 19:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>84</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1qb6ysayi2qt8" target="_blank">轉傳 我們要打的國產高端疫苗公司登記，前身就是大名鼎鼎的基亞哈（關係企業云辰也是），2014它們因財訊有以炒股大騙局深入報導它們，搞半天現在是更名再出發，政府超前部署到要把1300萬人的命運押在有多次不良紀錄且三期試驗都沒做的公司上？  《…</a></td>
+ <td>2021-11-23 13:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>85</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/iRHiqY4B0DEb0v6cqSX5" target="_blank">2024年最大的危機,人工智能危機來了,全面失業的時代真的到了,沒有創新能力的,沒有思考能力的人,很快就會被社會全部淘汰。 看看以下這6個行業,有沒有你的行業。 首先就是律師,所有的法律條款,AI全部都明明白白,並且還不會遺漏。 最重要的是…</a></td>
+ <td>2024-06-23 10:46<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>86</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2o1pehqf7pfa0" target="_blank">「真相」 2009年，當過十二年台大校長的陳維昭在出版回憶錄爆料，前總統李登輝與陳水扁執政時，都曾插手「喬」台大醫院院長人事，遭到他的拒絕。陳維昭透露，阿扁為此送了一份伴手禮要他帶走，但他至今尚未拆開。  回想民國初年的軍閥張作霖曾說：「我…</a></td>
+ <td>2024-10-25 16:13<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>87</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/MQQ__HBMcH5wRn_Ef4B-gH-A_4D-AP4A_qD8AP8A_wA" target="_blank">交通新規定乘客不得由左後門 上下車 (記者陳河忠 /台南報導) 自小客車與計 程車駕駛人要 注意了,一項 交通新規定已 經在三月間正式實施,但是駕駛人卻 多數不知情。新規定轎車的後座乘客 開車門,不得由左邊上下車,如果從 左後門上下車而和機…</a></td>
+ <td>2019-04-11 15:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>88</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAD4K_HHvruOHYZ7plmMg5yDhpXGJ6yzsfPTb_CfAAA" target="_blank">温馨提示:桃子 和 西瓜 不可一起吃 最近各地区高温持 续,很多中暑人群、大家可 能忽略了一致命细节,千万 记住桃子不能与西瓜一起 吃, 产生剧毒性,这几天学 校有学生中毒,但真是惊心 动魄!医生说,桃子与西瓜 一起服用,会马上丧命。科 普…</a></td>
+ <td>2018-06-21 16:03<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>89</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AADwAP_4P_8AeQAAH_n__f_9__kAAAAM__9-_gAYAAA" target="_blank">360 2 9/1日起,所有交流道口都已裝設攝 影機.……不管是上下交流道...只要壓 到雙白線,未打方向燈.一律照相 開罰單,錢難賺...請各位注意囉! </a></td>
+ <td>2018-08-31 06:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>90</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/i4y13yfipvfn" target="_blank">(!!!) 生命急救護 (!!!)  【 國際護生-韓國救狗 線上連署 】🐶  韓國救狗連署活動，因為要連署超過五萬人，才能提交韓國政府制定保護法案； 截至8月12日台北時間17點，線上聯署 11,653份，線下聯署 2,321份，共13,…</a></td>
+ <td>2024-10-18 14:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>91</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AA-AQBvZ__-Aof1_wXmwQR__AH_C_wAAA_8ABwJPh_8" target="_blank">不織布同業公會的專業說明,截錄重點如下: 1. 用加熱(例:微波爐)來消毒口罩,會讓口罩的靜電過濾 效率降低 2. 酒精是口罩/靜電棉的天敵,千萬不可將酒精噴在口 罩上。醫務人員,尤其應該注意。 3. 一般如不在高危環境下工作的人,一片一次…</a></td>
+ <td>2020-03-10 15:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>92</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/GBg-Pj5_wEPL48PDw8GDwQAABAj_uf__27nAAcQJh_8" target="_blank">*地震時 電梯資料維 HKELEV.cor 電梯門外空間最安全 分享地震常識.如居住大樓·先打開對外大門,走到電梯周 邊.勿進入電梯,朋友的先生是工程師·他稱那位置為減力 牆是一棟大樓最穩固的位置.紐西蘭曾發生七級以上地 震.一棟大樓全跨僅…</a></td>
+ <td>2024-04-27 03:06<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>93</td>
+ <td class="num">45</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3pz6t5p1e6bb7" target="_blank">吃花生竟能降20％腦梗塞發病機率！！  今年九月，日本國家癌症研究中心公佈針對45歲至74歲的75,000名對象進行為期17年的調查，發現每天吃4.3克花生的人與不吃花生的人相比，竟能降低腦梗塞近20%的發病機率！  一粒花生的重量約為0.…</a></td>
+ <td>2022-01-19 14:32<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>94</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_4Q-BPgE_wT_nD-cHxAcAAAZA-A__z_gAAD__v_-AEA" target="_blank">(這個畫面)是否太噁心了? (高雄市衛武營國家劇場演出) 純(台灣味)執政(陳其邁)究竟 要把台灣年輕人的氣質作賤。 到什麼地步?不知廉恥為何物? </a></td>
+ <td>2022-02-22 11:35<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>95</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2Kviq-aDgKOHq8D7gBvAr_yviCOAu8KL-qv5r4AngAM" target="_blank">摧命繩索聲聲逼 前無路來後網軍 公僕只求報國恩 跪謝國家培養恩 母親大人來世見 莫怪兒子訣別離 全館考績一人扛 邪惡當道理不公 滿朝盡是血滴子 外行領導專職人 耀武揚威恐嚇深 競競業業分寸守 寧死明志魂歸天 不願茍且遵賊旨 是笨是狂還是冤 …</a></td>
+ <td>2020-01-06 02:06<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>96</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/X3IP9JABd3gcY0Lpu41b" target="_blank">家長們人販子的拐騙套路升級了,千萬不要以為自己成年了就不會被拐賣。 十個人裡有九個人可能會中計,拐賣一個人只需二十秒。 這三種新型騙局一定要告訴孩子。第一種,在進商場大門時,門口的保安會說, 進門得戴口罩,當你還在疑惑,不是都解封了,怎麼還…</a></td>
+ <td>2024-08-31 14:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>97</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/CpvLAo4BBMtPEaE0lJBN" target="_blank">所以你一定會找到一些跟老師的陰謀稍微不熟 嗯 我本來學校就開會有同意 我在不高興的時候 我真的情緒有不穩定的時候 我可以做一些自己的事來緩和來調整 只要不影響課堂 不發出噪音就沒有影響到我 只要不影響課堂 沒有發出噪音定義就沒有影響到我 你…</a></td>
+ <td>2024-03-17 01:39<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>98</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/jCmD_wB_AH8Af4B_EP8Af4B_gH8Af4B_gH8AfwB_gP8" target="_blank">黃鶴樓之千年預言 - 唐。李白 武漢開邊意未已 漢皇重色思傾國 肺渴朝來頓欲蘇 炎洲沈水勝龍涎 全似丹青搵染成 國無人莫我知兮 支離東北風塵際 援玉枹兮擊鳴鼓 眾裏尋他千百度 「志意乖兮節義虧 成行新笋霜筠厚 城頭鐵鼓聲猶振 有客能為神女賦…</a></td>
+ <td>2020-02-22 17:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>99</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1wqo4tu4ps13e" target="_blank">https://www.i-pass.com.tw/Page/download</a></td>
+ <td>2025-07-17 13:15<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>100</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3n53ez9h3k7x7" target="_blank">https://youtu.be/QbJKNESRFcU</a></td>
+ <td>2022-01-13 20:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>101</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/EoASxnuif-4h_gACf_5qGn_-f_IACACcLdxPXAk_AC8" target="_blank">加拿大園第一 打高不准入境 Government Gouvernement of Canada du Canada f 韓黑父母不崩潰 Beginning at 12:01 am EDT on September 7, 2021, full…</a></td>
+ <td>2021-09-25 17:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>102</td>
+ <td class="num">44</td>
+ <td class="txt"><a href="https://cofacts.tw/article/___-_wAAAACxhlGG-A4_HgZ0YFx5neC7Mw8fvQW5hFg" target="_blank">Himalayan monkey flower. Blooms once in 20 years </a></td>
+ <td>2022-01-26 09:42<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>103</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/26ir4ewlbylgx" target="_blank">#一定要看 李嗣涔教授與幾位尖端科學家在人體免疫力研究上有了重大的發現。根據他們的研究,人體要對病毒這類“抗原“產生免疫力,並不需要與抗原分子有物質上的實際接觸,只要環境中出現抗原,健全的免疫力就能在接觸抗原分子前感應到這抗原而產生免疫力。…</a></td>
+ <td>2022-10-06 22:05<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>104</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/UBJAEvB__H-8PzwPHA4cHB48HjwePA48DjwOPAY-B38" target="_blank">北農18確診1員上 爆料者:誰能保證沒傳染給別人?匡列 【記者鍾維軒/台北報導 】台北農產運銷公司已有18 人確診,其中9人為二市營 業部員工、3人為臨時工。 有員工爆料指出,C姓員工 13日快篩陰性便持續到班, 2天後確診,讓他人暴露在 …</a></td>
+ <td>2021-06-20 00:55<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>105</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/83LQ6pABd3gcY0LpmH4F" target="_blank">你沒有那個行車信用卡嗎，， 有啊有啊，， 有什麼問題，， 我來問你一下好不好，， 我，， 怎樣喔，， 我問路一下啦，， 我不知道路耶，， 我不是這裡的人耶，， 我們不是自己人，， 我來問路一下啦，， 我不是這裡的人啦，， 嘿， 啊這，， 這…</a></td>
+ <td>2024-08-08 16:01<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>106</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/___go-AB4AHgAcMtzz3VKcAAwAD__8evgACAAP____8" target="_blank">1. 11月24日九合一選舉當 日要去投票 2. 因為九合一投票和公投 投票是在同 個地方舉行 因此九合一 的票投完後 不要急著離開投票所 選務人員說你要公投 投票。 3. 到時在愛家公投的票 在同意的欄位蓋章即 文 不同意 你是否同意民法…</a></td>
+ <td>2018-11-15 11:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>107</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/FClSR4kBFLWd9xY2rV5f" target="_blank">看好喔,我現在在替冰,整趟龍鋪,走四輪壁,這個蝦仁,這個水,這個蝦仁是很漂亮的喔,很大顆的蝦仁喔,你有看到嗎? 這蝦仁本來像冰沙一樣的大,他現在從外國進口進來台灣的時候,他就不知道放多少蝦仁,他就把蝦仁放到水是這種顏色的,看一看,水是這種顏…</a></td>
+ <td>2023-08-14 15:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>108</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/PCmuOYkBFLWd9xY24E9w" target="_blank">怎麼辦 好好好 喝杯咖啡 精神就來了 早上喝咖啡 中午喝咖啡 下午以後改成喝茶 茶對身體的功能 在所有NO產生的效果 和體質弱鹼的效果 它拿到雙料冠軍 茶是最複雜的保健食品 我先講兒茶素 catechins 兒茶素 每一種兒茶素 都能夠降低…</a></td>
+ <td>2024-11-15 08:24<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>109</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3b7scpyzzhd9c" target="_blank">哈佛教授證實：身體竟然隨心念改變（受益終生！）   來源：搜狐網，版權歸原作者  心靈是自己的地方。 你可以把天堂變成地獄，也可以把地獄變成天堂！  你知道嗎？ 我們的身體擁有非常強大的自我修復能力、自我療愈能力、自我適應能力、自我覺醒能力…</a></td>
+ <td>2026-01-30 14:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>110</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/71i2ugem65ts" target="_blank">0317~19(周一~周三)這3天是10年來最冷的的冷氣團來台，大家注意保暖。  轉貼~  未來3天是10年來最冷的的冷氣團來台，大家注意保暖。  從明天5點27分開始，太陽將會遠離地球，天氣會因此變得比較嚴寒，這種現象叫做Aphelion…</a></td>
+ <td>2025-07-21 14:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>111</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/d2ro45wyklll" target="_blank">《楊振寧給翁帆的永別信曝光：不用掛念我》 2025-10-25 08:45  致帆：我歸處，你前路  我的小帆：  當你讀到這些字時，我已告別這顆我們共同眷戀的星球，去往物理公式無法抵達的永恆。  但你別難過，能與你共度二十餘載晨昏，早已是…</a></td>
+ <td>2025-11-07 13:15<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>112</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/PPRk0IoBAjOeMOklx7sp" target="_blank">走,帶你們去揭秘超商飲料的含糖量排行榜 這些飲料啊,你只要喝一瓶下去 你一整天的含糖量就直接爆表 所以記得,再怎麼渴都千萬不要選 第十名,木瓜牛乳 9.5顆方糖 你以為你在喝牛奶 但其實你喝的都是糖跟熱量 第九名,減糖版的比菲多 10顆方糖…</a></td>
+ <td>2024-09-26 07:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>113</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/FynCuIkBFLWd9xY2gtYj" target="_blank">裝菜的塑料袋千萬別放冰箱 後果太可怕 裝菜的塑料袋不要再放進冰箱了 後果非常可怕 曾經有調查顯示 幾乎98%的人買菜回家後 直接把裝有菜的塑料袋放進冰箱 殊不知這個不起眼的小事 會危害全家人的健康 市面上的塑料袋各種各樣五顏六色 質量更是參…</a></td>
+ <td>2023-12-12 10:50<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>114</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAARoPP_9_zsYMjgwAD__4f_gAOAAfX_AAGA___4-Bw" target="_blank">07:48 銀欉 2019 TAIPEI WORLD LASER MEDICINE CONGRESS 2019 世界雷射园學大會 Laser Medicine &amp; Healthcare 台大醫學院名譽教授 高明見 建議 口罩內層加一張衛生紙…</a></td>
+ <td>2020-02-14 16:31<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>115</td>
+ <td class="num">43</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAArbz_fLFsg_yHzIHMpuTATIH8gfwv-MDM8wTJJP88" target="_blank">許靜宜 貴婦買了兩瓶法國路易十 三,不能随身携帶上飛 機,當場開瓶倒掉,面不 改色心不痛! 新版路易十三,一瓶 70.000元台幣。不爽機 場商店賣給她,卻又沒告 知不能帶上飛機,不想留 下讓機場人員得了便宜, 老娘全倒掉…………… 老娘就…</a></td>
+ <td>2021-12-13 19:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>116</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/fkwavsbspjy0" target="_blank">https://m.facebook.com/story.php?story_fbid=pfbid0vqZ9rYQ56SZg9EGCLHHdMSwbnKE76p9TdUjNyb9pWPRJJbootNbSdg1LKWAjw9PUl&amp;id=1…</a></td>
+ <td>2024-02-02 12:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>117</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/QAB__1h1QPlX8Uh7QWdgY39ncg9iB2AHfydiB3AGd4Y" target="_blank">最新的發現: 近期昆明市第三人民醫院研究,發現新冠肺炎菌,在鹼性 的食物,鹼性血液及鹼性體質不能生存,將新冠肺炎菌倒入 濃茶之中,十分鐘之內90%的肺炎菌被消滅,半小時之後, 的肺炎菌完全消滅,現在昆明第三人民醫院用濃茶治肺 炎病,取得重大…</a></td>
+ <td>2023-06-17 18:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>118</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/F9kH4B55IH0EDQf9X_7AA8ADfkcARb_9MA0_-QfgF8k" target="_blank">「次氯酸水」 市面上賣的太貴了 自己做吧,成本不到1%的價格喔。 如何製造? 答: 10cc 漂白水+10cc 工研白醋 +980cc 水=1000cc 次氯酸水 (red circle)用小噴瓶裝,清潔門把手 機,噴手(消毒殺菌) 感謝張…</a></td>
+ <td>2022-06-22 06:43<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>119</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AABv_gC-H_4B_gB-Af4D_gEKA_4H_gP-_n_wAeOBcAY" target="_blank">轉發就是善行: 長庚医院毒物科權威醫師已故林杰樑教授的文章稱: 蒸食物请一定要是先蓋着蓋子把水燒開, 再放入要蒸的食物, 蓋上蓋子! 難怪有癌症的人愈來愈多, 用電鍋蒸煮東西時, 一定要用開水,或是過濾過的水, 因為如果直接用自來水, 自來…</a></td>
+ <td>2025-02-02 08:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>120</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/g_-AM4D_AD_____vAAAAANgH0B_AB8H_H4gIHB-8H_g" target="_blank">政府新式照相機 。 8顆鏡頭+中間的紅外線發射燈,只要你在紅燈 下使用手機包你中彈 。 請記得別在停紅燈時看手機 機車1000 汽車3000 規機車駕駛人行駛道路以手持方式使用行動電話總 行數據通訊 道路交通管理處有吃 坂第31之1條2項0…</a></td>
+ <td>2019-04-22 02:15<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>121</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/26o7ov6jdinrd" target="_blank">大快人心 今天的英雄：韓國瑜、江啟臣  國民黨提案停止繼續遞減軍公教退休金所得替代率，民進黨提復議反對，今天上演表決大戰！  表決！國民黨獲勝！ 第一個民進黨提的復議案 第一次投票， 國民黨47票vs民進黨47票 第二次投票，立法院副院長江…</a></td>
+ <td>2025-07-20 08:54<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>122</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/0CHwkYoBZifh7hHIo1Yj" target="_blank">為什麼我們能在超市裡買到大豆油、玉米油呢? 你磨豆漿的時候,啃玉米的時候,有感覺到油膩嗎? 這些看著不含油的糧食,怎麼能榨出一桶一桶的植物油呢? 全靠現在的精煉工藝。 如果去超市買油,看看背面的標籤,上面寫著浸出法三個字。 這種油就不要買了…</a></td>
+ <td>2025-05-04 08:22<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>123</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_H-CD6ITgI-AB-H_hAug_6pnyHvoC6iDhAO__4RDsA8" target="_blank">由於NCP(武漢肺炎)有0~24 天的潛伏期,感染病毒後,沒 有任何徵兆,但肺細胞已經開 始了纖維化進程,直到有一天 因發燒及咳嗽去醫院檢查,此 時肺部通常已經50%纖維化 了,為時太晚! 專家提供一方法讓你盡早知道 自己肺部的狀況: 最、…</a></td>
+ <td>2020-03-06 21:31<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>124</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/0PeFWo0BAjOeMOklUryk" target="_blank">也是外食一族嗎? 我們領了醬,滷的滷汁 正是地上這一桶桶業務型醬油 只是究竟從何而來? 徐先追查,製作來源不是 豆類發酵釀造廠 而是隱身在一般狹小民宅 老闆我要買醬油膏 這個是淡色醬油 一探廚房大型爐灶 一袋袋粗鹽,耐熱甜味劑,提升風味 就…</a></td>
+ <td>2024-05-13 19:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>125</td>
+ <td class="num">42</td>
+ <td class="txt"><a href="https://cofacts.tw/article/nh5_AbGGcYZwhtoHLT4mduAceJ3o_yATMo8PuQX5hVg" target="_blank"></a></td>
+ <td>2022-04-27 18:13<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>126</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAFD6W_6L_EP8A_wD_APcA_wDPAP8I_wD_AH8Af3AD8" target="_blank">Rhizoma SHENG CHANG 勝昌 G.M.F. 中藥濃縮製劑 14070 營臺灣清冠一號 濃縮細粒 Taiwan Qing Guan Yi Hao (NRICM101) 勝昌製藥廠股份有限公司中壢廠 臺灣桃園市中壢區民族路六段4…</a></td>
+ <td>2023-04-11 11:37<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>127</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/D0Q__AAEP_wb_wBvwE_AD8HPwY_AL8AfAAAAAPf___8" target="_blank">#ERROR!</a></td>
+ <td>2020-12-10 21:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>128</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/21y3g0ld69q7e" target="_blank">記得鼓勵身邊人把這些app  從手機移除：  1.抖音／TikTok 2.新浪微博 3.微信／WeChat 4.淘寶 5.騰訊 6.bilibili／嗶哩嗶哩／B站 7.愛奇藝 8.小紅書 9.百度百科 10.知乎  當您打開後就會被自動連…</a></td>
+ <td>2024-11-06 12:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>129</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/jvqjbnhjv2vj" target="_blank">https://youtu.be/NvCBItDrivo?si=ODFc8b4QiGUybmvc</a></td>
+ <td>2026-01-29 15:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>130</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2r5mqako8wm1y" target="_blank">測試一下自己有沒有腦退化！     點開下面的數字圖表，用手指依順序從1點到50。 http://wap.jue-huo.com/app/html/game/1to50/1to50.html 10-19秒完成~~你是神 20-29秒完成~~…</a></td>
+ <td>2025-08-27 12:21<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>131</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/11xssuwt2omx3" target="_blank">建議各位 : 7/25 以前把家中.需要物品買足 !  7/26-7/30儘量不要外出 . 因為7/28指考 ! 有四萬多考生（不含家長）在外面活動 ! 前面還要看考場 .會是一次很大的群體活動 !  7/30-8月中則是儘量低度外出 ! …</a></td>
+ <td>2021-07-25 18:00<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>132</td>
+ <td class="num">41</td>
+ <td class="txt"><a href="https://cofacts.tw/article/4B_wDzAfAP8AXwAfj_8DZwADAAOf_-P_v_8iXzBfAAA" target="_blank">為什麼外面没有人, 也要你戴口罩? 噴嚏液體速度是35m/s, 隨距離衰竭, 2公尺後基本没有速度, 空氣中擴散8公尺左右; 並且病毒可懸浮24小時! 意思就是: 你出去就要戴口罩! 別以為外面沒人就可以偷懶, 誰也不知道24小时内有多少人…</a></td>
+ <td>2021-05-28 12:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>133</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/R-gjZZUBYrjt7MSM92Ta" target="_blank">老祖宗的智 1、病倒了就狂灌溫水。 慧(自療法) 2、上火了就多吃果蔬。 3、失眠了就泡泡雙腳。 4、咳嗽了就熬點梨湯。 5、疲憊了就適度按摩。 6、胃脹了就揉揉腹部。 7、便秘了就多吃粗糧。 18、貧血了就吃點紅棗。 9、血壓高了就多吃芹…</a></td>
+ <td>2026-05-08 08:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>134</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/cvjSoY0BAjOeMOklXiix" target="_blank">在網際網路上傳播的影片逐字稿，， 在網際網路上傳播的影片逐字稿，， 在網際網路上傳播的影片逐字稿，， 在網際網路上傳播的影片逐字稿，， 在網際網路上傳播的影片逐字稿，， 在網際網路上傳播的影片逐字稿，， 在網際網路上傳播的影片逐字稿，， 在…</a></td>
+ <td>2024-04-07 20:28<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>135</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/axAjg44B0DEb0v6cg-us" target="_blank"> </a></td>
+ <td>2024-07-01 07:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>136</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_4HvAfwA_gD8APwQ_hD_wPoA-wD6wP-g_-T_AIAA_8A" target="_blank">A15 自由廣場 (作者為中央研究院法律學研究所副研究員、澄社社 週末回老家跟父母吃飯時,母親詢問 著,聽說今年要拿到節電獎勵金,必須上 網「登錄」,跟過去只要該期間有節約用 電的事實,帳單上就會清清楚楚羅列出節 電獎勵金不同。不太會使用電…</a></td>
+ <td>2018-06-30 20:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>137</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3udq6pexqrzg9" target="_blank">*手機能做４件事情, 很重要, 請記下來.*    手機除了打電話以外, 你的手機還能做４件事情, 你以前不一定知道, 我們可能或多或少的知道一些緊急情況下的自救辦法, 但你可能不知道你的手機在緊要關頭也能救你一命!    看看下面的內容,…</a></td>
+ <td>2025-05-21 16:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>138</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/c3MehJEBd3gcY0LpgWzI" target="_blank">99%開車的都不曉得,其實左轉車道是可以直行的 堂哥有左轉車道可以直行,這哪來假的啊? 其實大部分的人,99%開車的好朋友都搞錯了 所以如果有在開車的,記得轉發此視頻給他 一般來講,左轉車道是有分成兩種的 一種叫左轉車道,一種叫專用左轉車道…</a></td>
+ <td>2025-08-07 22:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>139</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/HfVDp4sBAjOeMOkljKq2" target="_blank">世界最佳運動既然是癌症的勁敵 世界上真的有最完美的運動嗎? 它可以使冠心病發病率下降19% 胰臟癌發病率下降50% 乳腺癌風險下降12% 腸癌的風險下降50% 體尿病預防的效果提高到50% 是瑜伽、太極、游泳、跑步? NO!答案揭曉 這項被…</a></td>
+ <td>2025-10-27 02:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>140</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/jA-AAYHD__-UAdWvgA-c-4Eh9PmEwfU7gAGUP4A-__4" target="_blank">明天開始公共場所要強制戴口罩 去市場也要帶戴口罩未戴會被 開罰15000元哦.....….!很貴的哦..... 明天市場開始 強制戴口罩, 不論是客人還 是賣家,抓到 一律罰款一萬 五千元整 </a></td>
+ <td>2020-04-28 16:43<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>141</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/m_-zf4ABggOgE48Xlz-IG4YH4gfzP-AH4MeAQYB7vb8" target="_blank">Tuenti Soren Wang 11小時 B TF12:49 quote:「澳大利亞新南威爾士大學的化學教 授 帕利·托拉達森(Palli Toradarson)在推 特上解釋,由於新型冠狀病毒帶有脂類包 膜,肥皂水一洗,病毒結構破碎就…</a></td>
+ <td>2020-03-22 19:40<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>142</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/qejWepUBYrjt7MSMNYn9" target="_blank">機車族注意了，不管你是大車、小車的朋友們，在騎摩托車的都會知道，家裡的信箱拿出來就會收到一張定期檢驗排氣的單子，就是要你去摩托車店插管子，看你的排氣有沒有合格。 那現在呢，政府發了一篇新的文章出來，115年全面E化，從此之後再也收不到那張單…</a></td>
+ <td>2025-08-15 09:12<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>143</td>
+ <td class="num">40</td>
+ <td class="txt"><a href="https://cofacts.tw/article/SmptXYgBvEj1WkaUAa1Y" target="_blank">緊急提醒﹔新冠病毒又要捲土重來﹔身邊不少人又中招了﹔ 張文宏提醒大家﹔一定要做好應對新冠二次感染的準備﹔ 如果你出現以下七大症狀﹔八成是中招了﹔ 事關所有人﹔為了你我的健康﹔請一定把此視頻轉發給你的家人和朋友﹔ 學會識別和做好預防準備﹔ 一…</a></td>
+ <td>2023-06-15 20:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>144</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2mv53ohohvsj4" target="_blank">https://youtu.be/pqrnXJZbYNo?si=qq6AzaRhRspI2yIZ</a></td>
+ <td>2026-05-10 03:55<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>145</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/14riyeg3c8wqr" target="_blank">這就是T細胞療法， 大大的提升自體免疫力， 超實用又簡單，面對疫情， 大家一起來做，與您分享。 影片中示範者是一位在美國的中醫師  https://youtu.be/doeUrIeJtKs</a></td>
+ <td>2022-01-30 14:29<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>146</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AOZOOUAffrtgGXmZQJtk_3EJdC9Sg3ovQIVpHWEDf_c" target="_blank">The Merit Times 2022年5月5日 星期四 蒼生無奈 哀哀求救 免費了。 房排隊買快篩 疫情 卻因爲全民都需要口罩,變成是「 現在,疫情大流行來臨,民間需 快篩劑不夠篩檢,藥 口罩國家隊」的宣傳。 要大量的快篩試劑,但拖一年…</a></td>
+ <td>2022-05-17 22:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>147</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1t8shu4sqtaxd" target="_blank">最新航空公司行李政策：  長榮、華航、星宇都一樣～ 團體票跟一些低艙等的經濟艙、散客票現在都改為記件制 託運每人每件23公斤，超過件數就收費。  舉例：客人一件行李箱15公斤，然後又多買一台電鍋3公斤，因為電鍋太大，無法放進行李箱。所以即使…</a></td>
+ <td>2023-05-18 11:05<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>148</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/yPnOVIcBn6k8q-JUwJRd" target="_blank">緬典北部,在咱們中國人的認知裡,是最為恐怖的地方。人從胸部空去的緬典都得被割個腰子,甚至為了節約成本,割腰子都不會給你打麻藥。如果你以為緬典北部被割腰子就算是最危險的地方,那麼我接下來要講的這幾個國家跟緬典比起來,緬典做的事情已經算是最仁慈…</a></td>
+ <td>2023-08-22 09:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>149</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAAZ8D_8P_wZ_D_8AAA7-B_4Dfge-ASYGPga-AAA__8" target="_blank">&lt; 陳珍艺 01.14 10:470 14:48 ← Reborn Chew Reborn Chew 14 May 2020 at 11:36 - 10:47 https://m.facebook.com/story.php?story_f…</a></td>
+ <td>2021-09-13 07:39<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>150</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/o5qju40BBMtPEaE04Mt2" target="_blank">炸雞在油鍋裡燙得金黃酥脆 裝進紙袋交給客人 但就這薄薄的一層紙 裡頭竟暗藏 致命危機 紙袋內膜有層肉眼幾乎看不到的塗層 使用原料是全佛碗積物質 又稱PFAS 目的是防止油水滲漏 這是一種穩定性高的化合物 家族有一萬多個成員 已被證實多數都含…</a></td>
+ <td>2024-12-27 09:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>151</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/TJxzRY4BBMtPEaE0JqkE" target="_blank">真象大白 蘇丹紅搞了半天,結果竟然是我們台灣人自己跑 去大陸生產,又在台灣設立一堆公司到處銷售 自己人害自己人,真是可惡! 檢查一下家中的胡椒粉,辣椒粉,咖哩粉 反正只要是粉的都檢查一下 如果製造商是這九家,「津棧、釜山、廣元、龍 海、杰展…</a></td>
+ <td>2024-11-23 17:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>152</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/13bcnlskoj4pu" target="_blank">https://youtu.be/4qe6PHiiEwM?si=YOeqw04e1CPBNb2b</a></td>
+ <td>2025-06-17 13:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>153</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/-P-MN0Q1BBVUF5_XCdcAF_W34BXgFuBa8BbwJ_gD-GM" target="_blank">自然保健月刊 四六(三八六) 鄭老師 十秒,到第五次「抬腳」下就完成了,一 覺睡到天亮。 在「抬腳」過程中,大小腿有些麻, 小腹膀胱處有些酸痛,好像肌肉拉得很緊 張。我不知道什麼原因「抬腳」可以止住 我及免我半夜起身上廁所小便,但我實在 感…</a></td>
+ <td>2025-12-13 10:46<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>154</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/14oe23lljqmnc" target="_blank">2014年他把縣市長選舉輔助款五百萬全捐給甘惠忠神父  2016年他一年中多次捐出月薪，總計80萬，給日本地震，台東風災，八仙塵暴  2018他捐出行政院長月薪32萬，給花蓮地震  13年來他陸陸續續捐給南家扶用來發給孩子的助學金，超過50…</a></td>
+ <td>2025-08-25 06:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>155</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_D8D-gD_AAcP_wD_AH8AHsADjdvZmZmZmZmZmQ2bmRk" target="_blank">交通裁罰新規定 「法令已經確定了!大家一定要注意!本月20日起,馬上開始罰了!不管你是騎機車或者是 開汽車的,千萬都要注意!! 全國(Taiwan)將實施紅燈越線處罰條例, 凡是在等待紅燈時,超出白色禁止越線者馬上處以900元的罰金。 還有…</a></td>
+ <td>2020-12-04 08:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>156</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/20ytel6wdzfww" target="_blank">分享一個剛剛發生的真實事情。  鄭州退休老師薛明，這些天在兒子家照顧孫孫，上個星期天，薛老師兒子、兒媳帶著孫孫和老媽出去玩，薛老師說：我昨晚沒睡好，有點困，我不出去了，你們去吧。  薛老師一個人在家，住在30樓，隔著窗戶就能夠看到北三環高架…</a></td>
+ <td>2025-05-19 19:02<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>157</td>
+ <td class="num">39</td>
+ <td class="txt"><a href="https://cofacts.tw/article/mIKFv48B3RbBUEe2N1fo" target="_blank">1908年東京大學的池田教授發明了味精 這是從昆布中提煉出來的一種纖維物質 其主要成分是谷氨酸 他找到投資專業生產味精 這個公司至今還在日本未知數 1921年上海人吳映初從麵筋中提煉出味精 成本只有日本獲得四分之一 胡先生找到投資專業生產味…</a></td>
+ <td>2025-03-29 13:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>158</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2f6fu30j848gq" target="_blank">《台灣半導體產業強勢崛起的背後》  ​眾所周知，半導體是現代科學技術的巔峰，支撐起現代科技、國防、民生等方方面面，是一個國家科技、工業、國防實力的後盾和基石。從1987年台灣積體電路製造股份有限公司（也即耳熟能詳的台積電）創立至今，30年的…</a></td>
+ <td>2025-11-27 16:37<br><small>已有 2 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>159</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/eubnbJQBYrjt7MSM0OPf" target="_blank">中風患者的醒覺: 三年前,我非常健康~勤快自我鍛煉、騎自 行車、徒步旅行。 …然而我卻中風了! @有一天,當我站起來的時候,周圍都在搖 晃,我的手腳也有刺痛的感覺。 我在ICU 呆了4天,在病房呆了 15 天。 診斷結果~高血壓、血液粘稠、…</a></td>
+ <td>2026-02-10 14:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>160</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/f7aAFu-2gAatt4AHgAetv4gGzb6ABm_-BaCMJJ70f_g" target="_blank">實在是太瘋狂了! 莫德納公司宣佈銷 毀3000萬劑神奇的 疫苗,原因為何? 請看以下的影片! 都打了三劑了才說 23:2 </a></td>
+ <td>2022-07-31 22:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>161</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1dhgehnkuwndg" target="_blank">https://youtu.be/C0pjDNe4J78</a></td>
+ <td>2023-03-14 19:40<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>162</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gAGAAN_u7_8c87BhsHGxbRBh0fEAcfP_MCHwPzBx8_E" target="_blank">疫苗有何副作用?價格差多少? 疫苗名稱 輝瑞 莫德納 嬌生 AZ 副作用 接種處痠痛、頭痛、 疲倦、發燒 諾瓦瓦克斯接種處痠痛、頭痛、 疲倦 接種處痠痛、頭痛、 疲倦 接種處腫痛、頭痛、 疲倦、發燒、肌肉痠痛 接種處痠痛、發燒 或發冷 價格…</a></td>
+ <td>2021-07-06 18:08<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>163</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/bfXv14sBAjOeMOklOOb2" target="_blank">黃澄澄的木瓜一年四季都可以在超市市場買到 在台灣看似尋常的水果 竟然藏有驚人功效 還有人稱之為水果之王 網路分享 曾有癌症病友經歷16年化療 透過吃木瓜輔助抗癌 礦氧化物到體內 它可以幫助清除掉一些自由基 然後我們知道就是 如果自由基累積太…</a></td>
+ <td>2024-08-05 06:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>164</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3tu6ud4j35psa" target="_blank">十大傷腎排行榜，為了自己耐心聽完 https://youtu.be/nqpFfIohL3w</a></td>
+ <td>2024-12-30 22:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>165</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/178t93spfe096" target="_blank">轉貼： 工程師看政治@@ ​台積電被美國強迫投資5.3兆，這金額超過台灣兩年的總預算，心痛嗎？如果這樣聽起來還不是很痛，我們來仔細看看，台積電還算不算根留台灣。  台積電一年資本支出約300億美元，現在又被川普搶走1000億，若按4年平均，…</a></td>
+ <td>2025-06-02 01:25<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>166</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/12SRfI8BUCqzrknpkgT8" target="_blank">想要臨時讓白頭髮突然一下變成黑色 有這麼一個臨時抱佛腳的方法 竟然是把泡了馬鈴薯皮的水 拿來塗在白頭髮上 不要幾分鐘的時間 頭髮顏色就會變深 到底是什麼原理呢 來看今天的科學補給站 頭髮灰濛濛看了真的好難過 但其實不需要染髮劑 利用馬鈴薯水…</a></td>
+ <td>2025-05-18 18:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>167</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/IPUCzIsBAjOeMOklSddG" target="_blank">就順著彎道怎麼都沒有在打啊 紀錄交流道前順著彎道右轉 前方駕駛每一輛都沒打方向燈 但就因為這個動作 屏東一名女駕駛吃了一張罰單 車主把罰單PO網 說我已荷包呼籲大家 在彎道還需要打方向燈 真的不知道這裡要打被開罰一千兩百元 還要祭典處分讓他…</a></td>
+ <td>2024-05-19 19:08<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>168</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/4im1WIkBFLWd9xY2tHGx" target="_blank">張振興介紹說 多數中老年人記憶力下降、手腳不靈活、耳鳴、失眠等癥狀 都可能與生理性腦萎縮有關 而科學研究表明 人體機能衰退的最大原因在於腦萎縮 最顯著的癥狀就是舌頭變僵硬 表情也變得呆板 記得注意的是 腦萎縮一旦發生基本無法逆轉 只有做好預…</a></td>
+ <td>2025-07-23 18:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>169</td>
+ <td class="num">38</td>
+ <td class="txt"><a href="https://cofacts.tw/article/g4fxxr32rncp" target="_blank">https://www.mygopen.com/2022/11/fake-eggs.html?m=1</a></td>
+ <td>2024-09-08 10:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>170</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/44bnhwMPIY8x3nGYeYN8A8wv8CPiI8cHxA_fD1-IgwM" target="_blank"></a></td>
+ <td>2022-08-22 15:54<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>171</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/yEGH8Y3_yCGEwYkJiauP_6AjkP___wAA_j_gg-AD8CM" target="_blank">昨天6/15時鐘說,政府買進居 家快篩劑一份一千元,需要的 民眾可以洽購。 今天6/16吳宗憲秀出同樣品 牌,他買的,捐出11萬劑,價值 3000萬,每份不要300元,有購 買憑證...他說,一份1000塊,你 騙鬼哦! 晚上時鐘馬上聲明[…</a></td>
+ <td>2021-06-29 07:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>172</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_4kACQD_FP8cIPwnBL_8I4Th_CHcLwQ_hCcELTQ5_-k" target="_blank">德國在臺協會3小時前發話,全是 那個政府在搞鬼! 德國在台協會看不下去說話了! 我確信,透過政府與人民共同 買疫苗並非政府掌控 的努力,必能再次控制住疫 情。我感謝許多各界人士,尤 其是醫護人員,不眠不休站在 第一線執行任務,自身亦承受 而…</a></td>
+ <td>2021-06-16 18:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>173</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/qpiGgYf_AH8AHvQP_oD_wJ_Af4gPiAF_B_8D_wH_AIA" target="_blank">日本厚生省決定日本國內不再接種 英國AZ疫苗,現有的疫苗約1億 2000萬劑,將輸入亞洲其他國家 (包括台灣)。 ガ イスラエル・バレ ラマダン チナ人と 相次ぐ 4月中旬口周辺を 旧市街の ク周辺 5月7日 ハマスカ 10弾発射 空間 イ…</a></td>
+ <td>2021-06-15 20:57<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>174</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/KqTR_YcBpPlTXSoGdJod" target="_blank"></a></td>
+ <td>2024-08-13 09:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>175</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/MfdCU40BAjOeMOklA7RG" target="_blank">這是我爸爸,因為某種因素生病住院 住院住了大概8天吧,出院 出院後他第一件事情,他回到家裡差不多中午 他就打算,他受不了,他說我要洗個澡 我們是勸他說,中午這個時間比較不適合,老人家八十幾歲 那我爸爸就不聽勸,說堅持要洗澡 結果一洗,洗沒有…</a></td>
+ <td>2025-03-16 10:56<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>176</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/CPVqk4sBAjOeMOklwZJA" target="_blank">執行家法 忍無可忍 執行家法 忍無可忍 執行家法 忍無可忍 執行家法 忍無可忍</a></td>
+ <td>2023-11-23 12:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>177</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2y9xdvto5gchp" target="_blank">佳文分享~ 重溫愛的故事-《勿忘提燈人》 作者：Sung-Fang Lo  今天休假在喜來登飯店台北西門扶輪社說故事：永遠不要忘記在黑暗中曾替你點過燈的人  今天想要和扶輪社的大家分享的故事是38年前發生在我身上的往事，我要與各位介紹我生命…</a></td>
+ <td>2025-09-02 08:01<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>178</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3v7-_oQCgACIAYf75uOHQ8b3l0OGNaQDiGOMG4AB__8" target="_blank">司於退休前選擇請領終生月退休俸的 診公務員亡故時,遺族可以向該公務 員最後的服務機關人事室,申請領取六個 月 (本俸乘以二再乘以六)的 撫慰金,譬如某人在「台北市 某某區公所」退休,則其遺族 在眷屬亡故時,可以向『台北 市某個區公所人事室』…</a></td>
+ <td>2024-09-11 23:24<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>179</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/q5pSwY0BBMtPEaE0vdWG" target="_blank">硬可蹲下,也不彎腰低頭,這是一條安全警訊。 前不久台灣海豬會前主席江秉昆先生不幸逝世,原因是主動賣玻璃。 當時他手機掉落在地上,在彎腰前啟齒,突然暈倒就這樣走了。 美國芝加哥市長墨許肯也是在新聞採訪中,彎下身去撿掉在地上的簽字筆,出現主動賣…</a></td>
+ <td>2024-09-10 17:12<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>180</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/B_8AB___gAC-54dxoRGCM____f8AAAAAP_Af-D_4AAA" target="_blank">全世界云南 一只母猪居然生下8个男孩(图) 昨天凌晨12点,云南省昆明市宜良 县的一个小山村发生一件怪事,一只 母猪居然生下8个男婴儿。在场所有 人都不敢相信自己的眼睛!各国专家 赶到现场后都无法解释这一奇特迹 象!这将成为世界历史上的又一…</a></td>
+ <td>2022-03-30 13:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>181</td>
+ <td class="num">37</td>
+ <td class="txt"><a href="https://cofacts.tw/article/21jh1idoplvvs" target="_blank">大家要小心喔！ 現在路邊的智慧停車格，除了停車會自動計算停車費外，如果車輛有違規、規費未繳納，或未按時驗車，等…..，這根桿子會自動通報相關單位請警察來處置，實在太恐怖了！</a></td>
+ <td>2025-08-11 15:02<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>182</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3r1fj5y9p5jmh" target="_blank">https://youtu.be/d4e8T4K197Y?si=NKjjZnxTTi6MqNBJ</a></td>
+ <td>2026-06-13 15:05<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>183</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gA-MH4B_gv-_v4ADgAeB_wAWP_8APwD_AAIF_n_-f34" target="_blank">台大退休主治醫生陳棠+ 提供了,A型流感強力來襲。 預防感染好方法如下;一 只要外出 回家第一件事, 喝一杯 40 至 50度的熱水,4 清除所有病毒, 簡單易行且十分有效,一 這是他的行醫救世← 六十年的經驗, 實行後已連續十七年以上, …</a></td>
+ <td>2020-01-29 13:57<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>184</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/EhuYfJ38gOyA_ID8xB_Ir4A_8AzAfMf8wGyA_IGMv_w" target="_blank">蝦皮購物 4G TF3:39 交通新規定乘客不得由左後... http://news.tnn.tw 交通新規定 乘客不得由左後門上下車 INN TNN台灣地方新聞/林琨璋/更新日期:2011-03-31 23:04:15 (記者陳河忠/台南…</a></td>
+ <td>2019-04-11 21:42<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>185</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/PeYvOpQBYrjt7MSMlZhE" target="_blank">年底最新的騙局大家一定要注意了啊 比如說我現在隨便找個人讓他開口說話 帥哥我想問一下洗手間在哪里啊 這一層是沒有洗手間的 如果你要上洗手間的話 你要坐電梯坐到7樓 然後呢 呃在那個方向會有一個啊 指示牌在那裡就可以看到洗手間了 嗯好謝謝啊來…</a></td>
+ <td>2025-01-17 13:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>186</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3pn2skt603p7g" target="_blank">https://youtu.be/0Qq6Xqy9RDM</a></td>
+ <td>2025-05-21 14:18<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>187</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AVxjbnpRyCdS-nWhuZtY" target="_blank">搭飛機之後的登機牌 Boarding Pass 不要亂扔垃圾桶也不要留在飛機座位的口袋裡，登機牌上有個 QR Code 二維碼, 揀到的人用手機掃一下，就有你的全名，你的航空公司的會員卡 Frequent Flyer 帳號，進入你的帳號更改…</a></td>
+ <td>2017-06-05 16:07<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>188</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3dkhp3ueo6yug" target="_blank"> 霜降後 記得老祖宗訓示：   白露身不露 寒露腳不露頸不露    霜降頭頂不露。 今天開始女性朋友們外出要戴條絲巾 能在脖子繞兩圈的那種。 保護風池穴， 風府穴不進風。   還有今天開始不要打赤腳了 在家也要穿全棉襪子 襪子要能包住腳踝關…</a></td>
+ <td>2025-11-28 14:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>189</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/SUjIHp0BB0eXeo822j24" target="_blank">你知道最近又出現了一種新型騙局嗎？比電信詐騙還要可怕，一個不小心就會讓你傾家蕩產。10個人有8個人中招，而且還不分男女，這支影片非常重要，你一定要耐心看完。  我朋友跟我說他去逛街差點中招，就是他在三創的時候，有一個阿嬤拿著手機跑過來跟他說…</a></td>
+ <td>2026-06-01 23:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>190</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAB__6gH-wcLNgsHC7eJtwG-gIeDt4O_ALYBtgfiH_8" target="_blank">|前2劑 BNT+BNT AZ+AZ BNT+BNT BNT AZ+AZ BNT BNT+BNT |嬌生 BNT+BNT AZ BNT+BNT NVX BNT+BNT CVN NVX 嬌生 BNT+BNT VLA AZ+AZ CVN AZ+…</a></td>
+ <td>2022-01-18 00:03<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>191</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/15s8oqg2cw67u" target="_blank">國產高端疫苗公司登記， 前身就是大名鼎鼎的基亞生（關係企業云辰也是）， 2014它們因財訊有以炒股大騙局深入報導它們， 搞半天現在是更名再出發， 政府超前部署到要把1300萬人的命運 押在有多次不良紀錄且三期試驗都沒做的公司上？  《基亞生…</a></td>
+ <td>2021-09-08 17:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>192</td>
+ <td class="num">36</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__mAAa6TgB-bG8cbwifBB-Dj0yPjo8EThAOAA6Pz__M" target="_blank">台灣 衛福部長陳時中提醒大家 再次強調:別出門,端午節(6月25日) 過後,再看疫情控制情況! 警告:一旦染上,就算治癒了,後遺症 也會拖累後半生!這場瘟疫比17年前 的非典更嚴重,用的藥副作用更大。 如果出了特效藥,也只能保命,僅此而 已…</a></td>
+ <td>2025-04-23 15:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>193</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/zpx3x3b6yk6f" target="_blank">https://www.facebook.com/share/v/1CSXyJGL1E/?mibextid=wwXIfr</a></td>
+ <td>2025-12-18 14:52<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>194</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/44xncwllq0tm" target="_blank">防疫中心副指揮官說，他到京元電子現塲，發現比想像中複雜。京元和超豐兩家員工加起來超過上萬人，他們又都住在竹科生活圈，和每個人的家庭及公司息息相關！  所以这一 二周対新竹苗粟地区是COVID 19 擴散期 请各位同仁休假期間儘量避免出門和降…</a></td>
+ <td>2021-06-24 21:07<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>195</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1znvfgduz3y49" target="_blank">請務必要看這個影片，除了已知的免疫力下降、腫瘤、皰疹、癌症、還有更多慢性疾病的潛伏病毒🦠和細菌…等等，等著爆發⋯ Dr. Bhakdi 的下一個預言⋯  https://rumble.com/vrfkx4-46076584.html</a></td>
+ <td>2023-03-17 13:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>196</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2rhkoof94xanc" target="_blank">https://liff.line.me/1454987169-1WAXAP3K/v2/article/VxJyD7g?utm_source=lineshare</a></td>
+ <td>2025-03-15 13:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>197</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/v79b8zwuckjq" target="_blank">美國走頭無路的分析， 可讀性頗高  前幾天和一位剛退休，目前住在上海的牛津大學經濟教授聊天，不得不說英國佬在政治上，想法和眼光還是了不起的，不管媒體怎麼宣傳，高級知識分子對局勢的見解還是可以的，和老教授聊天中，我對中美國際局勢感覺有了個更清…</a></td>
+ <td>2024-06-23 02:18<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>198</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/17ydo3j86crj7" target="_blank">美國研究 🇺🇸 【植物性飲食降低73％新冠肺炎轉為重症的風險】  美國知名的約翰霍普金斯大學所領導團隊在2021年6月《英國醫學期刊營養、預防與健康》發表研究論文  該研究在歐美6個國家（法國、德國、義大利、西班牙、英國、美國）針對照顧新冠…</a></td>
+ <td>2021-08-17 10:27<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>199</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAAGD74_vn9gF8gPxB_mHyQ_PB8kH0A_4D_gP_APAC8" target="_blank">新冠病毒在各種場合感染風險 2 美國德州學會針對一般民1 拆郵件 眾常參與的活動進行風險 餐廳外賣 等級劃分,包含環境是否 2 加油站加油 通風及人群群聚多寡來作 2 評斷。 3 除了勤洗手戴 口罩,可多吃 蔬果增加免疫! 3 3 4 在酒…</a></td>
+ <td>2022-08-19 08:03<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>200</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/cSmq8ogBFLWd9xY2AgTm" target="_blank">現在我們看到,在我手上拿的這個,是判罪分子利用微型攝像機,竊取我們客戶的密碼。 現在我給大家演示一下,它是怎樣安裝的。 這邊有個彈簧,然後把彈簧往這邊壓,同時往上卡。 卡了以後,就讓大家看不出來這是一個,增加了一塊東西。 同時它這地方是攝像…</a></td>
+ <td>2023-07-23 20:30<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>201</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/jrbn9fd4vnx4" target="_blank">還記得街頭彈鋼琴那個流浪漢嗎? 世界都為他讓路  還記得三年前， 美國街頭那個流浪漢嗎？ 他因為驚豔的表現刷屏網絡。  當時，在佛羅里達一家樂器店門口，擺著一架鋼琴，來往的市民可以隨意彈唱。  這一天，這位蓬頭垢面的流浪漢經過這裡，看到了鋼…</a></td>
+ <td>2024-11-04 21:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>202</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/12b5l4ovpoa6j" target="_blank">看見了戴這種的離遠一點囉！ 自私口罩  https://youtu.be/NmoFPrvP3c4</a></td>
+ <td>2021-07-11 19:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>203</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/l3HjY5ABd3gcY0LpY7ev" target="_blank">在表面上看起來感染者很少,但實際上確實是有很大的變化 接種越來越多,感染者就越來越多 大概是這樣的一個系統 比起第一次第二次,第三次也會有更多的感染 第四次也會有更多的感染 這裡是第一次,第二次也有感染 這裡是第三次,第四次也有感染 顯然是…</a></td>
+ <td>2024-07-20 17:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>204</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gA_f94H_gAHnA4Kj4Af8H6gfqD-8H4AHAAGMAf_j__E" target="_blank">市自來水公司提醒: 未分类 • 08:12 市自來水公司提醒: 疫情非常时期,自来水中处理过程中在允许 的范围内加大了氯气的注入。请大家在用水 时,特别是烧开水、煮饭用水前要把水装出 来,最少静置两小时以上再用。这样会更健 康! ~~~这条…</a></td>
+ <td>2020-03-27 18:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>205</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/uA-AD4B_4H___wAAnhz-AHkvHwcPgwA_WR_Im-ifAA8" target="_blank">第一次走路被開罰單二 #新出來的法規, #大家注意喔! 駕駛人 (或行為人 注 採網路、語音轉 帳、郵繳或向經要現代 收之機構繳納罰族 須至應到業處所到 候裁決 「應到案日期 項 發阮怡君 「被通知人受處罰對象 汽車駕駛人 汽車所有人 其他…</a></td>
+ <td>2020-12-12 20:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>206</td>
+ <td class="num">35</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3bmwqydln9nk0" target="_blank">大S享年僅48歲，白龍王的預言又應驗了？  2011年《康熙來了》有一期，主題是關於鞋子的。  有着“台灣拉丁舞女王”之稱的舞蹈家劉真和大S在綜藝中大聊特聊關於鞋子的趣事。  大S曾被稱為“鞋之狂魔”，她們有一個共同的愛好：喜歡收藏鞋子。 …</a></td>
+ <td>2025-03-23 13:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>207</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_____wAAAAD__wAAAAAAAAAAAAAAAP__AAAAAP____8" target="_blank"></a></td>
+ <td>2020-07-27 15:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>208</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/yJfID8AfwH_AA8AD___AH_AFgA_-_8EDwQHwD_gfeB8" target="_blank">我愛家人-我要活下去-我挺星雲法師、郭 台銘與民間企業買疫苗連署活動 新冠疫情越來越嚴重,連續17天確診人數破百人,死亡人數已達124人,每日死亡人數一直攀 升,就如侯友宜市長說的:「這些死亡的市民都是他們親人。」 疫情嚴重到這情況,再不進…</a></td>
+ <td>2021-06-10 08:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>209</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/f4NhA8ATVv5YHkP-f4JDBv-fwAeAR6JHwIeCj4AH7f8" target="_blank">印度洋特選白鯧魚... www.mayfullfinefood... 圖解】白鯧?金鯧... food.ltn.com.tw 要避免買白艙鱼,尤其黄脚艙。 這些是生長在印度洋,很污染, 很多年前已有人提示。現在更 甚。因 印度人 死後,是尸…</a></td>
+ <td>2021-06-27 09:54<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>210</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/A4AjxH_lf-AD4AZ_nh_kDZfwHpieMB8pAekA0eCP_x8" target="_blank">2021/6/3 報章抽查 市面8款台美生產豬肉製品 7款瘦肉精超標最高27.6倍 Smithold 超標27.6倍 |Smithfield豬柳漢堡扒| |來源地:美國 貢 九 超標8.2倍 阿中丸子麻香貢丸 |來源地:台灣 (資料來源:香…</a></td>
+ <td>2023-11-11 11:12<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>211</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/7udYk5QBYrjt7MSMmx9k" target="_blank">今天呢,二寶的屍狗的山抽吧,挺多人的出海去打魚去了 在打魚的半道的時候啊,就上傳了一個這麼個吉祥物啊 網友的老人的歲數大的懂得說了,這是2025吉祥物 看到的這樣都有啊,跟著借過啊,路過的家人們看到視頻的也借個好運吧 咱們2025都順風順水…</a></td>
+ <td>2025-03-02 15:30<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>212</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AH4P_n_-AAD5hcD_gAH_gQAAAAD_3___H4J5oggCf_4" target="_blank">2/19 美国航空航天局的火星探 测器“恒心漫游者”于昨天, 周四(2/18),美国东部时间 下午3:55pm,成功降落在 2.925亿英里之外的火星地表。 请大家静心倾听这珍贵的26秒 种视频,这是来自近3亿英里 外的一个世界的地貌和声音…</a></td>
+ <td>2021-02-28 00:09<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>213</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__8EZcAPYAVgBWA1dqd-p-elgaUDpRetBg8EPzB98Xk" target="_blank">好友請一定要看 檳城住 27 樓的於先生帶著四歲女兒坐電梯, 電梯運行至 23 樓時,一陣強烈抖動後迅速下墜 他一手抱起女兒, 一手迅速按亮所有樓層按鍵 (要從低層往高層按) 電力恢復以後電梯在 16 樓停住 這是電梯急墜自救法, 人人都有…</a></td>
+ <td>2019-05-16 20:15<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>214</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__-AAYH_gAOG_4H_gH-AAYADyZvZk9mbiAGBi4GL__8" target="_blank">交通裁罰新規定 「法令已經確定了!大家一定要注意!本月20日起,馬上開始罰了!不管你是騎機車或者是 開汽車的,千萬都要注意!! 全國(Taiwan)將實施紅燈越線處罰條例, 1 凡是在等待紅燈時,超出白色禁止越線者馬上處以900元的罰金。 …</a></td>
+ <td>2019-03-15 08:57<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>215</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/TSmnQ4kBFLWd9xY2NFqt" target="_blank">山深處的奇花一輩子沒見過 發給群友看看 親愛的朋友 恭喜您刷到這條美麗的視頻 希望帶給你健康幸福 快樂轉發分享 快把這份好運</a></td>
+ <td>2023-12-21 19:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>216</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/FpqxyY0BBMtPEaE0reQV" target="_blank">字幕由Amara.org社区提供 MING PAO CANADA // MING PAO TORONTO</a></td>
+ <td>2025-02-18 07:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>217</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/qPWSfIsBAjOeMOklPHct" target="_blank">一場生日會,半城鴻門宴。 俄羅斯一個網紅在桑拿泳池舉辦自己的生日派對, 丈夫特意準備了將近25公斤的乾冰來打造夢幻仙境。 當乾冰倒入泳池後,頓時雲霧繚繞, 看到如此般美景,往裡一跳,悲劇了。 泳池中的兩人當場炸飛暴斃, 丈夫也因二氧化碳中毒…</a></td>
+ <td>2024-12-06 12:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>218</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2ws799xbyfngr" target="_blank">翻譯：  **齊加尼克效應**  什麼是齊加尼克效應？有趣吧！讀完這篇文章，你會有一個非常驚喜的結尾！請繼續閱讀......  你拿出鑰匙打開家門，解鎖後走進去。幾個小時後，你在找鑰匙，卻發現它還留在門上。這種情況有沒有發生過在你身上？  …</a></td>
+ <td>2025-07-31 10:39<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>219</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2pamwjm3ee15g" target="_blank">七十歲的費玉清，住在淡水老宅裡，不接電話，也不再唱歌。  他早上六點起床練八段錦，澆花時輕哼〈一剪梅〉，餵魚用小湯匙，動作慢得像在細數時間。鄰居說，他常牽著小白狗到河岸散步，經過菜攤就買兩根蔥，其他什麼也不要。  那棟房子是媽媽留下來的三層…</a></td>
+ <td>2026-05-26 10:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>220</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/35z1azp1epo2" target="_blank">75歲的馬英九，從年輕固定晨跑、生活作息正常、現在據說失智； 79歲的川普，每天睡四小時、從不運動、吃麥當勞、唯一飲料喝可樂，現在還可以跳舞。  科學的盡頭是玄學，可以不信邪、但是不能不信玄。   這是一個非常有意思的對比，確實會讓人感嘆「…</a></td>
+ <td>2026-05-25 15:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>221</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/oAOICb__AP-H9o-CbQJ_AX9PPgdaRwQDUsdBx2Q3fIM" target="_blank">大陸,鍾院士在確診病例中發現一 個現象,一萬多個確診案例,竟然 都是葷食者,而素食者都躲過了此 劫。 鍾南山院士說: 至今確診一萬多例 無 素食者!讓我們 行動起來吃素吧! 以素為主可以讓我們 遠離疾病災難! 吃素離瘟疫 </a></td>
+ <td>2022-02-09 08:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>222</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/HwAPAH_4f8h_AH-gfAB_yH_Md8weiNAE_AT_DvwA_gA" target="_blank">失眠?睡前穿雙襪子 科學家發現一個能助人早 15 分鐘進入夢鄉,睡 著也不易在夜間醒來的祕訣。很簡單,就是睡 前將襪子穿上。 《生理人類學期刊(Journal of Physiological Anthropology)》的研究指出,入睡的…</a></td>
+ <td>2021-12-04 12:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>223</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/cOiiZpUBYrjt7MSMhWdX" target="_blank">你知道嗎？戴口罩的顏色不只是美觀的問題，更關繫著我們的健康哦。最近有整形醫生啊，提出警告，千萬別戴白色口罩，因為白色口罩呢，有個最大問題就是它會反光，尤其是在戶外啊，強烈的紫外線下面，白色口罩就像一面小鏡子，會不斷地把紫外線反射到我們的眼周…</a></td>
+ <td>2026-03-19 13:05<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>224</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/hhh6dkflk65x" target="_blank">今年乙已青蛇逢雙春，根據民俗從明天起至清明節後一周，不問候早上好和早安，至4月10日；之後恢復正常，咱就遵重習俗吧！今年是特殊年。請您多多保重身體，平安健康每一天！感謝有您！</a></td>
+ <td>2025-04-17 12:43<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>225</td>
+ <td class="num">34</td>
+ <td class="txt"><a href="https://cofacts.tw/article/svbZ8YsBAjOeMOklVQRh" target="_blank">一般我們在外遇到緊急情況 究竟用手機撥打求援電話 要撥119還是110呢? 答案通通都不對 不管你人在國內還是國外 撥打112才是正確答案 救命專線112第一次聽到好驚訝 其實一般民眾熟悉的110或是119 緊急報案救護專線 如果遇到緊急危…</a></td>
+ <td>2025-01-24 20:36<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>226</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3pt9qblhyh3cw" target="_blank">這篇寫得不錯 ：（全文引自亞東醫院醫師林丕基） 今天上夜班，忘了帶最重要的傢伙～老花眼鏡，看東西有些吃力，用 24 的超大字體寫篇廢文發洩一下，可能跟 “主流民意” 不符合，看完不爽請當笑話一則，不要來找我戰嘿！拜託！  事後諸葛 vs 千…</a></td>
+ <td>2021-06-28 17:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>227</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/28fnk6od01jns" target="_blank">https://youtu.be/mw8-RHRJlVs</a></td>
+ <td>2022-08-06 07:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>228</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1vhlpyq67kkcw" target="_blank">記得如果有在吃膽固醇的Lipitor or zocor的人必須把藥停下等Paxlovid療程完了後才能重新吃膽固醇的藥，不然的話就要求你的醫師改用Crestor or Pravachol; 如果你有在吃高血壓的藥如Losartan (Coz…</a></td>
+ <td>2022-07-24 12:06<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>229</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/11fipv4x3446" target="_blank">https://m.youtube.com/watch?v=caBL6svcotA&amp;feature=share</a></td>
+ <td>2021-07-19 09:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>230</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gr-Av8CfgDuEG8G_hT_kP6SfgB-gP4Nvgx-AH4A_xj8" target="_blank">要避免買白艙鱼, 尤其黄脚艙。這些 是生長在印度洋, 很污染,很多年前 己有人提示。現 在更甚。因 印度 人 死後,是尸體 放在河中飘出印度 洋. 現在covid 肆 虐在印度。 對。今 天新聞說,中國在 印度運來海產發現 COVID-19…</a></td>
+ <td>2021-06-19 21:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>231</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/f_9__wAAAAgAAN-fzP_IoQAPz__D_wABf__PjwKDAAE" target="_blank">我 貳、分區供水規劃 減壓供水區 操作 模式 地區 人口 供水 量 辨別 顏色 全區減量15% 新營區、鹽水區、白河區、柳營區、後壁區 東山區、麻豆區、下營區、六甲區、官田區 大內區、佳里區、學甲區、西港區、七股區、 將軍區、北門區、新化區…</a></td>
+ <td>2021-05-28 17:13<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>232</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1bqx4jdfucrmt" target="_blank">川普在三天前（ 1／12 ）打電話給普京，俄烏戰爭的原汁原味都出來了。  一通電話就敲定了：雙方停火，俄國佔領的烏克蘭領土歸俄國，俄烏邊界重新劃定；而且，烏克蘭永遠不准加入北約。此言一出，歐洲炸鍋，揚言支持烏克蘭作戰到底。  於是川普亮出第…</a></td>
+ <td>2025-03-07 16:36<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>233</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/103rbfc7fgh1c" target="_blank">趙國華是清華Chem 1976, Yale PhD, 在Oakland一帶公衞機構任職二、三十年,   (*) 5/06/22北加州舊金山灣區有一華人社團請他談新冠治療, 回答大家問題, Zoom meeting 聽後筆記分享😊： - 美國…</a></td>
+ <td>2022-11-12 12:28<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>234</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/pfVql4sBAjOeMOkl25Zk" target="_blank">女子表情痛苦倒臥路邊 任誰看到都忍不住上前關心 男子趕緊詢問是否要叫救護車 但她卻拒絕了 不過堅持請她幫忙 撥打一支陌生手機聯繫家人 就怕轉身離開 跳出她的同夥要民眾負責 還是決定打119叫救護車 沒想到就在這時 女子突然彈起身轉頭逃跑 留…</a></td>
+ <td>2024-06-26 10:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>235</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/I_nbNocBn6k8q-JUfHhZ" target="_blank">機車23種紅燈金額 最後一個 罰破6萬 1. 未戴安全帽 罰500元 2. 夜間未開啟大燈 罰1200元 3. 騎到人行道 罰600元 4. 騎車抽菸 罰600元 5. 騎車使用手機 罰1000元 6. 行駛進行機車道 罰600元 7. 未…</a></td>
+ <td>2023-11-11 20:46<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>236</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/j-Tvp4CbJAPgJ3AHc5k35Af2D_JuBw9AP0MOAw8fDh8" target="_blank">朱凱廸 林飛帆 羅冠聰 王立強 TECO @赵盛 </a></td>
+ <td>2019-11-27 07:13<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>237</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/znP5gpEBd3gcY0LpuWqT" target="_blank">爸爸,為什麼相同年齡的人 有人看上去老得快,有人老得慢呢? 呵呵,哎呀,我們來看看這些照片吧 他們其實都是同齡人 但看上去年齡相差了十幾歲 大部分人認為衰老的快慢是和年齡相關 但其實不是的,今天我就來告訴你 決定你衰老速度的真相 發現這個秘…</a></td>
+ <td>2024-12-23 11:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>238</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/sfcuSI0BAjOeMOkl46jq" target="_blank">沖馬桶前,你會先蓋上蓋子嗎? 若你還沒有養成這個習慣 看完接下來這個影片 或許會讓你徹底改變 沖馬桶中的氣體 會在一到兩公尺的速度中 從廁所中衝出來 另外,你會發現 這些肉眼看不到的細菌 竟然會漂浮在空氣中長達一小時 很可能會落在牙刷、毛巾…</a></td>
+ <td>2024-11-03 20:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>239</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ktpd_Y8B1_U4kWSQotiz" target="_blank">現在這個鴉片大家一定要傳出去 尤其是家裡有女兒一定要傳出去 我們說過去台灣有鷹腳肉很多 但是現在我們說的是毒品鷹腳肉 這是怎麼說的? 我最近有一個做警察的好朋友 傳一封資料給我 說曹熙哥曹熙哥 你一定要把這個資料傳過去 傳出去讓大家知道 尤…</a></td>
+ <td>2024-11-29 10:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>240</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1n2y2u3eapxn4" target="_blank">「轉載，再轉載....」「念佛持咒力量無邊....」 現在科學已發現，持誦佛號時，念波與聲波中不可思議的能量與力量  念佛是一種制控聲波   近幾年國外一些科研機構與科學家都在研究佛號佛咒。 現在比較公認的結論是：佛號，佛咒是一種制控聲波，…</a></td>
+ <td>2025-04-26 23:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>241</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/g_3gHewH4AfwD-AH8B_wD-AH_D___________wAAAAA" target="_blank">6:01:49 KP公 臺北區監理所紓困補助 C 臺北區監理所 紓困補助 (請確實填寫正確的個人資料) 身分證字號: 出生年月日: 提交 D U 2 24 Ads </a></td>
+ <td>2025-05-03 17:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>242</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/pdmrmkvb0wth" target="_blank">《忠謀勿忘忠厚》，切記飲水思源，台積電的推手是潘文淵，是李國鼎  《政府不甘投資台積電？我質疑》  文：葉萬安  今年9 7歲（2023年）前經建會副主委葉萬安，財經界尊他為「台灣經濟活電腦」，整部台灣經濟史烙印在他腦子，因為他全程參與，公…</a></td>
+ <td>2025-10-16 12:11<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>243</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1z4xg1pa6lknl" target="_blank">這篇文章寫得太好了 不能不分享🎉🎉  本文作者/林文欣  今天，柯文哲被判17年。 很多人在討論政治、立場、對錯。 但我想到的，是另一件事。  因為就在今天， 我終於確認了， 天道的高維結構投影， 真正的運行規律。  我們曾經在同一個地方長…</a></td>
+ <td>2026-04-08 17:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>244</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_D8AKwMPGT___wIBAAA_f_w_ggEP_4AHgAGAB4h___8" target="_blank">最新消息 剛結束的蘇格蘭格拉斯哥舉行的聯合國「全 球氣候變遷大會」(COP26-2021 10/31~11/12)的重大共識就是減少碳與甲 烷的排放,以及將核電重新定位為「綠能」 。 COP26大會之後,大多數與會國家形成了一 項新的共識,…</a></td>
+ <td>2021-12-24 13:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>245</td>
+ <td class="num">33</td>
+ <td class="txt"><a href="https://cofacts.tw/article/5WrBRogBvEj1WkaU7pLc" target="_blank">才五月氣溫就飆破三十度 口罩完全戴不住 加上大眾運輸規定也放寬 出現疫情反撲 第一線觀察最準確 診所醫院急門診確診病例上升 民眾分享真的很多人又中了二卻三卻的一堆 診所也是人滿為患 以臺大醫院而言的話呢 病床可能在這個走道跟大廳都有這個病人…</a></td>
+ <td>2023-06-28 09:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>246</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_4P-Ac4HCAceBx8OzxyOON5xnMM5AzkHEAAyAy__P_k" target="_blank"></a></td>
+ <td>2019-03-30 12:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>247</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAAf-A8OP_9_kQMxwRkPP98_AwHPHwET_58hDyVAJR4" target="_blank">莫德納 副作用對策懶人包 莫德納 |疫苗| |疫苗 常見副作用 腫 痛 倦 斑 林局長(藥師)製圖 接種部位腫脹 (1/10-1/100) 接種部位疼痛 (92.0%) 頭痛(64.7%) 肌肉痛(61.5%) 關節痛(46.4%) (70…</a></td>
+ <td>2021-07-21 19:57<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>248</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/n88AAT4nAf_D_4ADoFfgP-AD4Mvi3-CH4AvgAcBx__s" target="_blank">抄件 檔號 保存年限: 嚴重特殊傳染性肺炎中央流行疫情指揮中心函 機關地址:10050台北市中正區林森南路6號 承辦人: 電話:02-2395 電子信箱: @cdc.gov.tw 發文日期:中華民國110年4月20日 發文字號:肺中指字第1…</a></td>
+ <td>2021-06-22 11:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>249</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8B-AF7_vgAO4T4AH-P-EQ4EB8H-O45hrgAOAAYH___8" target="_blank">@ 芥花油的問題! 再沒時間也要看一看 P.S. 在台北 超市 發現“芥花子油”排满 油架,詳看英文,竟然是 Canola oil ? 無良商人! Canola 是基因改造植物, 芥花籽油是 Brassica 或Rapeseed oil.怎…</a></td>
+ <td>2022-07-24 14:30<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>250</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_____4AHgAfAA8H_wCfBvwAuA_6D_4A_gD-AD_8f__8" target="_blank">榮總醫師的貼文: 新冠肺炎在還沒有來到肺部之前, 它會在喉嚨部位存活4天。 在這個時候,人們會開始咳嗽及喉痛。 如果他能儘量多喝溫開水及鹽巴或醋, 就能消滅病菌。 儘快把此訊息轉達一下, 因為你會救他人一命! 請轉發給身邊的親朋好友,祝福大…</a></td>
+ <td>2021-06-11 15:42<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>251</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1d1u3dn3a1yh0" target="_blank">真是好文一篇，長知識了！   續逆差73年，印度為啥美元多到用不完？  印度的4項特技，相當於美聯儲手中的印鈔機，連續逆差73年，美元還是多到用不完。  ***  年年巨額逆差，每年流出數千億美元，為什麼印度手中的美元還是多到花不完，因為他…</a></td>
+ <td>2024-06-23 11:14<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>252</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/n_-AA5QBqa-f____AEAAAAQg7HjYPvw--B7YDrgMPHw" target="_blank">開車、騎車的朋友們,如果在行駛 途中看到了背橙色書包的小朋友, 严請大家一定要放慢車速因為他們 是有聽力障礙的小朋友體~ 感恩! 接力!請轉發 </a></td>
+ <td>2024-04-03 17:48<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>253</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3ekguw1zlei7z" target="_blank">美國NIH第三劑疫苗混打效果比較研究出爐： 1. 產生抗體效價antibody titers 最有效的組合是3劑都打Moderna ，抗體效價增加10 倍，達到3727。  2. 其次是Heterologous boost 混打 2a. P…</a></td>
+ <td>2022-01-21 23:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>254</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/DfXMYYsBAjOeMOklAVgq" target="_blank">泰國已經有多麼危險了,連歐美人也開始成為獵物。就在前幾天,失蹤的德國地產大亨終於被找到了,然而人卻已經被肢解成 13 塊了,這些肉塊被放在了黑色袋子裏,在冰櫃凍了一周之久才被警方發現,這種事已經不是泰國第一次出現了,泰國失蹤遊客事件更是在年…</a></td>
+ <td>2023-12-02 22:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>255</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/-Af8h3gDeAf_z_wPIAjgBgAAAAD___v___9__wAAAAA" target="_blank">殼桂 ptocarya chinensis 馬鞍藤 Ipomoea pes-caprae subsp. brasiliensis 山檳榔 Pinanga tashire </a></td>
+ <td>2019-06-02 17:25<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>256</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/-AD4B_gP-A__9_g3gAD4AAAA8AD___if_7___wAAAAA" target="_blank">ereia manillana 大葉桃花心木 Swietenia macrophylla 台灣大 Glycine mc formosanc % </a></td>
+ <td>2019-06-02 17:25<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>257</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/4B_wAcGtgf_B_8ADyf_AA-AjwA___4AFAAEn_wP_J_8" target="_blank">中華民國消防員工作權益促進會 受文者:台北市政府消防局 發文日期:中華民國108年8月 20 發文字號:消工行字第1080820001號 密等及解密條件或保密期限:普通 附件: 聯絡地址:104 臺北市中山區吉林路200巷16號 Email…</a></td>
+ <td>2019-08-28 08:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>258</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2qp8sej6i3r4k" target="_blank">上面穿著金黃色是王忠泉將軍3年前122歲今年已經125歲蒜頭配高梁酒抗氧化都沒有老人斑，氣色紅潤去老返童，高梁58度配蒜頭是長生不老丹，加油 ！</a></td>
+ <td>2024-08-27 17:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>259</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/vvbl8YsBAjOeMOklAgQO" target="_blank">每天呀 握拳一分鐘 肝臟輕鬆一整天 腿腳輕鬆了 大家好 我是骨科主任醫師焦鳳林 今天給大家分享一個動作 活血化瘀 調漲奇蹟 平時沒事兒握一握 協助調理體質 如果您有腰椎間盤突出或者頸椎病 引起腰椎疼痛呢 頭疼頭暈呢 您接下來呀 一定要認真聽…</a></td>
+ <td>2024-08-31 11:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>260</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/efaLvowBAjOeMOklIfgv" target="_blank">字幕由 Amara.org 社群提供 感謝觀看</a></td>
+ <td>2024-12-18 18:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>261</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/TeTK4ZIBd8PNbJEMfaK7" target="_blank">家人們注意了 從10月份開始 千萬別再吃這八種食物了 尤其是老人和孩子 一口都別吃危害非常大 大家幾乎每天都在吃這些東西 現在的醫院一年四季都人山人海 到底是為什麼呢 我們每個人都希望自己健康 如果說您真的在意自己健康的話 那今天我說的這八…</a></td>
+ <td>2025-06-18 11:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>262</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2ik04o3at2kgk" target="_blank">重點：   又有新的視訊（不同的人）   https://youtu.be/uaPS0VvXOzw?si=2pJMWtxZ2VWNYIkF</a></td>
+ <td>2025-06-02 09:12<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>263</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1spotgi4x7na7" target="_blank">近期基隆警方聯合刑大 查獲基隆假酒工廠，這些酒款請小心….</a></td>
+ <td>2025-05-31 16:00<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>264</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/14ngw5wrbkka1" target="_blank">台灣再次列入驚屎（死）世界醜聞記錄了！ 立法院該將這筆經費完全刪除！                                                                    一年編15億納稅錢給殺人犯請律師  …</a></td>
+ <td>2025-06-10 18:24<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>265</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/Mvmml4cBn6k8q-JUgt-U" target="_blank">但是這一條可能比超速罰的還要貴哦!原來是沒開大燈!有這麼嚴重嗎?你現在回想起來,你在考駕照的時候有類似的題目嗎? 真的有人遇到了這樣的罰單。大白天的因為下雨,那麼天色頗亮,沒開大燈,結果竟然被舉發,他真的拿到了一張四千五百元的罰單。 這消息…</a></td>
+ <td>2024-06-18 09:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>266</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1y9z1ow7t7l0k" target="_blank">(small pink diamond)賴仁淙臉書 光田醫院耳鼻喉科部主任 可能不要認為每天衹有5~600病例代表疫情已經在控制中。實際上可能是我們的檢驗量一天最多就是查出600人左右。  看重症比較準確。目前357例嚴重肺炎，139例呼吸…</a></td>
+ <td>2021-06-04 19:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>267</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2lt5ca0vqvu1b" target="_blank">2022年1月1日元旦/國際大醜聞/川普妻子/梅蘭妮亞在医院和医生 做愛。 美國TV媒體報導~~影片清浙、長達2分鐘。CNN將引起美國政壇大亂。</a></td>
+ <td>2022-01-09 17:17<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>268</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/23jwvrde3tt6s" target="_blank">https://youtu.be/cBDrlnaTluw</a></td>
+ <td>2021-09-16 19:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>269</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1q5mbfjklh31e" target="_blank">母親節前 分享 ~死要錢的母親~  日本的諷刺明星兼導演北原武，不久前又獲得一個電影的國際獎。  幾年前他的母親去世，他回故鄉去奔喪。  他一直不喜歡母親，因為她一直不斷向這一個兒子要錢，只要他一個月沒有寄錢回家，母親就打電話給他破口大罵，…</a></td>
+ <td>2025-07-17 19:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>270</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/12kdx19uq7gzk" target="_blank">雨欣女孩 台灣屏東人 是平凡家庭長大 在阿拉伯卡塔皇室 發光發熱 https://youtu.be/AqjK0DJIwzA?si=Sk3SvhNeS7HMAsVF</a></td>
+ <td>2025-08-24 02:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>271</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/B_8AZce_xAH_9-RDwAHwBf__IMAc4AfQC8gL-A_4D_A" target="_blank">法永師父 這個南瓜確實為顧膝蓋聖品,以下是弟子自己親身 經歷: 南瓜+鳳梨 做法:南瓜洗淨直接切塊+鳳梨削皮加入適量+一點 點鹽巴。。。放入電鍋(內鍋不加水)蒸煮,即可。 弟子原本運動傷到膝蓋,走路或下樓梯疼痛到要扶 持才能行走,在一次因緣…</a></td>
+ <td>2024-10-28 10:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>272</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gA_f94H_gAHnA4Kj4Af8H6gPqD_8H4AHAAGMAf_j__E" target="_blank">市自來水公司提醒: □未分类 08:12 市自來水公司提醒: 疫情非常时期,自来水中处理过程中在允许 的范围内加大了氯气的注入。请大家在用水 时,特别是烧开水、煮饭用水前要把水装出 来,最少静置两小时以上再用。这样会更健 康! ~~~这条消…</a></td>
+ <td>2020-04-27 15:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>273</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/TvR6AosBAjOeMOklfe-g" target="_blank">生薑 抗關節炎，防軟骨磨損 薑是體內最佳除濕機 薑辣素促進血液循環驅寒、暖身 提早代謝達到瘦身效果  嫩薑切塊  鳳梨切塊  薑、鳳梨放入罐中  加入果醋  加入乾淨過濾水 薑辣素還可抗發炎減緩關節炎疼痛  冷藏醃漬 1天食用60克生薑更可…</a></td>
+ <td>2023-10-22 18:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>274</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/oAAgHmP-P_7iD-6P4CPgB_Jz5APkV-BDIGIgTin-fn4" target="_blank">董事長 黃明端【2】 大陸,冠狀病毒專家鐘南山 84歲院士 再次強調:別出門,端午節(6月25 日)過後,再看疫情控制情況! 警告:一旦染上,就算治癒了, 後遺症也會拖累後半生!這場瘟疫 比17年前的非典更嚴重,用的藥 副作用更大。如果出了…</a></td>
+ <td>2021-05-20 10:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>275</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3rv98jr5pg2gx" target="_blank">https://www.facebook.com/share/p/18ZwZzVBKw/</a></td>
+ <td>2025-03-24 13:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>276</td>
+ <td class="num">32</td>
+ <td class="txt"><a href="https://cofacts.tw/article/UJoCvY0BBMtPEaE0As4d" target="_blank">哇,太離譜了!詐騙蟑螂太可惡了! 疫情期間,一對夫妻要搭捷運去淡水看台,放鬆一下心情。 夫妻倆在捷運西門站上車,太太走在前面,刷卡時看到一張卡沒有拿走,那是一張悠遊卡,上面有認同卡的圖案,很漂亮,她就把它收起來。 先生沒有看到太太收了這張卡…</a></td>
+ <td>2024-07-18 14:40<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>277</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/25rprjdx0b9kg" target="_blank">【賣貨便】請你喝7-11拿鐵！期限內點 https://bit.ly/3EwWlV6 下載APP，依指示填資料領咖啡券(專屬簡訊，轉寄無效)</a></td>
+ <td>2022-12-03 13:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>278</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/239jyf1c45ez6" target="_blank">中山牙醫出身，陽明公衛所進修。没有精神科專科醫師執照。居然當松德醫院副院長。松德醫院是以前松山療養院，專收治精神患者。院長一定要有精神科專科醫師執照才能擔任。陳時中硬改規章，半年前以一牙醫師當精神病院院長，另一半２０１２年開膽手術，術後疏忽…</a></td>
+ <td>2022-11-20 18:56<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>279</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2l03gp3caghz4" target="_blank">這一點不經記者挖掘，國人全被矇在鼓裏，原来所謂“確診”还有這些眉眉角角在~~   “台灣不僅PCR數不足，而且確診基準也是世界寬鬆的，美日歐澳紐都是CT值40就算確診，台灣必須到34才算確診，40跟34是差了64倍，也因此台灣被宣告確診的人…</a></td>
+ <td>2021-06-10 12:31<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>280</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/12Pe_44BUCqzrknpdULl" target="_blank">所以,你開心地拍了一張自拍照。 你微笑,擺出一個姿勢,然後拍下照片。 但當你拍攝瞬間,你的指尖可能會不小心進入鏡頭。 現在,你意識到如何這可以被用在你身上? 如何這張自拍照你上傳到你的社交媒體上,可以把你的生活翻轉? 不,你可能不意識到,有…</a></td>
+ <td>2024-05-06 22:28<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>281</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/39b7jrdltb9bq" target="_blank">所以在外看到一些滷蛋.或沒有殼的蛋類最好不要買。</a></td>
+ <td>2023-02-04 22:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>282</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/A4Z4H3gfYD8AH4ADf-Z_4nb-n6L_wAAAAAeAD8vP-d4" target="_blank">疫苗原理 輝瑞、莫德納 → mRNA疫苗 將病毒表面的棘蛋白mRNA片段打進人體 AZ、嬌生 → 腺病毒載體疫苗 病毒的棘蛋白包裹在猿猴的腺病毒內, 再注射到人體 大愛電視 Da Ai Television </a></td>
+ <td>2021-06-22 14:18<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>283</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/y-jxMJUBYrjt7MSMkQ0m" target="_blank">2025年2月28日晚上9點左右,一場三百年一遇的天文奇觀,七星連珠即將震撼登場。 太陽系的七大行星,水星,金星,火星,木星,土星,天王星和海王星,將在夜空中連成一條璀璨的珠鏈,閃耀奪目。 這次七星連珠不僅罕見,更因其排列精準度達到三百年來…</a></td>
+ <td>2025-03-02 09:56<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>284</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2ge7vve58ueqm" target="_blank">https://youtu.be/H8_AGm8buS4</a></td>
+ <td>2021-07-06 15:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>285</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/B_5__gMCKIJalwFJIxUX_wBwD_AZ_B_6f___34AAAAA" target="_blank">花1分鐘看一下!! (轉載)我弟媳婦發生的實際案例:昨天早上10:32 許振 成 詐騙集團真厲害,昨天忽然聽到郵差按電鈴說我的包 裏,於是我就拿印章下去,看到郵差先生穿著一身綠色衣 服及一台機車,郵差先生就拿出一張包裹簽章單請我簽 名,(我…</a></td>
+ <td>2020-10-14 11:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>286</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/BADEA9Hx_____5A_gANCA87TDsEPww4PjAOOA5wH_8c" target="_blank">新當選的盧森堡總理是個同 性戀也就罷了。↓你見過這 樣的第一夫人嗎? </a></td>
+ <td>2022-07-28 12:08<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>287</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAEAoX_3f7c4gH7rOKoy-H_7IKh8AnwGOAQwBoD1__8" target="_blank">台北市公車七月一日起,上下 車都要刷卡。若少刷一個, 被鎖卡,解卡程序很麻煩,干 萬別忘了! 以 </a></td>
+ <td>2019-07-03 10:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>288</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/w_hj8AP4A_j_-F_4A4gGgAAAAAD__v__9_fj8AN3AAA" target="_blank">oldii 山黃梔 Gardenia jasminoides 亞洲 Colubr </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>289</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/-AD_8ApwB_kH_wf_B_kAAAf_BTAAAP____f4N_gCAAA" target="_blank">da 魚木 Crateva adansonii subsp. formosensis Bischofia </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>290</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ICOHB_4P-A__A_wD_AD8AgAAAAD___-__K__twAfAAA" target="_blank">es vaccinioides 血藤 Mucuna macrocarpa 阿里 Carpir </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>291</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_EMAAzP8I_0H_wP_AF8ADwAAAAD_-___-n_-DwDvAAA" target="_blank">da citrifolia 無患子 Sapindus mukorossii llex r </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>292</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_lP-AX4AvgD-AP4D-AP6AwAAAAD____7__9__wAAAAA" target="_blank">青剛櫟 Cyclobalanopsis glauca 台灣火刺木 Pyracantha koidzumii 對 Ran </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>293</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/A_jD-DP4AfiH_wf_AAcHBgAAwAD3__P___9__wAAAAA" target="_blank">=joo var. 雞母珠 Abrus precatorius 楓港巿 Diospyro </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>294</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/l_oH5gfgB-D_8P_w4IBgQAAAAAD_7____L_8fwAvAAA" target="_blank">sylvestris 台東蘇鐵 Cycas taitungensis 樹杞 Ardisia sieb </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>295</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/Bh84HxgfHh8_vxrHADYAPwAA8Bj-f_I__n___wABAAA" target="_blank">旅人蕉 Ravenala madagascariensis 山柚 Champereia man </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>296</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/OgP4Af-H-AP4f_g_IAvwAAAAAAD___v_-____wAAAAA" target="_blank">蓉 s mutabilis 台灣梭羅木 Reevesia formosana 台灣吉 Musa ba formosa </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>297</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/opsH5I0BBMtPEaE0IQ8Q" target="_blank">－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－－�  �������������������������������������������…</a></td>
+ <td>2024-04-03 12:42<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>298</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/x_8D_AHjAMMD_AP8A_wD-AAAAAD___3__f___wAAAAA" target="_blank">誉火刺木 Cantha koidzumii 對面花 Randia spinosa Ardisi </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>299</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_4D8YPFgx6Cf4O_gj4C-AP8A_A34mPBg8I7xEvQZ-Bk" target="_blank">國語日報 副刊精選 Mandarin Daily News </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>300</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AA5Afu4A_-__wPuB82OCAPLD-MHx4PDA8f_A2MDg4GU" target="_blank">80 mg THC Indica TWISTED EXTRACTS HC EST. MMXV RASPBERRY ZZZ BOMB 8 X 10 mg DOSES FRUIT GUMMY 17 g tains Cannabis. Keep …</a></td>
+ <td>2018-12-18 21:29<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>301</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/JXLEypABd3gcY0LpnlC1" target="_blank">桃子不洗，可以直接吃嗎 </a></td>
+ <td>2024-12-09 15:24<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>302</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3rkbc8msuds99" target="_blank">旅客在飯店房間內 拍到小偷用磁鐵綁在勾環上 利用磁吸原理想要開他的房間門，幸好他還沒外出 剛好撞見這一幕 並及時錄下影片 呼籲出外住宿一定不能把貴重物品放在房間內！</a></td>
+ <td>2024-10-05 21:28<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>303</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3owv9aj9ykmrv" target="_blank">🌷老祖宗留下來的10個養生方法，一定要記住: 1.天補:就是要多出門，多呼吸新鮮空氣，多曬曬太陽，多曬曬後背。  2.地補:去山上，農田，海邊走走，多接觸土地，大自然，看看花花草草，聽聽鳥語，聞聞花香，接接地氣，看日出日落，看星辰大海。（現…</a></td>
+ <td>2025-10-18 07:54<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>304</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2wc2nyfkp4xdm" target="_blank">https://youtu.be/7Mrn4pu1FZc?si=6W83PBcp0smqT670</a></td>
+ <td>2025-10-04 06:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>305</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/mor88x3rw4sb" target="_blank">大快人心~~ 今天的英雄：韓國瑜、江啟臣 國民黨提案停止繼續遞減軍公教退休金所得替代率，民進黨提復議反對，今天上演表決大戰！ 表決！國民黨獲勝！ https://www.facebook.com/share/zDYKMaPXoKPMFJor…</a></td>
+ <td>2025-07-31 17:46<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>306</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3asvrrqjzva37" target="_blank">https://youtu.be/afr6OyrjjiQ?si=aEa91M0yf4GDg_u_</a></td>
+ <td>2025-09-16 19:21<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>307</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gh-AHwH_Af8AAdZD9muOf8RhxEPAA___g3cAAQP_I_8" target="_blank">給每天都很少喝水的人 做個提醒喔! 缺水傷身!從頭到腳都出事! 腦疲勞 腦中風 記憶力減退 泌尿道結石 關節痛 氣喘 抽筋 痛風 過敏 healthylives.tw 水喝不夠當心關節痛、腦中 風、變笨! </a></td>
+ <td>2025-07-19 13:21<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>308</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1w4qpcuvsyxvq" target="_blank">費斯汀格法則  你聽過「費斯汀格法則」嗎？多少人因為不懂而被殘害！  最近發生一個關於情緒管理的血淋淋的案例。  北京八達嶺野生動物園一位女遊客跟自己的丈夫爭吵，在虎區私自下車被東北虎拖走，受了重傷，她的媽媽也下車去救她，被老虎殘忍咬傷致死…</a></td>
+ <td>2025-08-20 15:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>309</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AbcSzpIBDfH0hhhZbZ2j" target="_blank">減肥想吃麵包怎麼辦? 這一招讓你降血糖 很多人都很喜歡吃麵包吧 但是你有聽過有一招可以降低你吃完麵包的餐後血糖嗎? 今天有新鮮的 烤過後的 冷凍後的 冷凍後再回烤的四種吃法 結果在一個歐洲臨床營養期刊發表的研究發現 冷凍過後的麵包生糖指數竟…</a></td>
+ <td>2025-08-19 15:02<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>310</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3jky2dt3wk1a1" target="_blank">**值得一讀**  1979年之前，藥品上並未標註有效期，這一做法始於1979年的美國。以下是一篇由美國佛羅里達州的莫欣·賈法醫生分享的文章：  **藥品真的會過期嗎？還是我們被騙了？**  由理查德·阿爾特舒勒撰寫  如果一瓶泰諾（撲熱息…</a></td>
+ <td>2026-06-02 14:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>311</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2lva2wv8ge8pd" target="_blank">https://youtu.be/MKhgoNW2IcU</a></td>
+ <td>2024-08-22 22:18<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>312</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/l-cx1pQBYrjt7MSM9njF" target="_blank">回回 哈佛大學 TAS HARVARD HARVARD UNIVERSITY 每日閱讀 | 提升自己 送你兩句話 第一句:人越快樂,免疫力越高。 第二句:人90%的疾病都是可以自 癒的,人越快樂,免疫力越高,只 要一快樂,就會經脈通暢,經脈…</a></td>
+ <td>2026-06-16 17:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>313</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/F9kH4B55IH0EDQf9X_7AA8ADfkcARb_9cA0_-QfgF8E" target="_blank">「次氯酸水」 市面上賣的太貴了 自己做吧,成本不到1%的價格喔。 如何製造? 答: 10cc 漂白水+10cc 工研白醋 +980cc 水=1000cc 次氯酸水 (red circle)用小噴瓶裝,清潔門把手 機,噴手(消毒殺菌) 感謝張…</a></td>
+ <td>2021-06-30 20:20<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>314</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/DfpJBoUBC7Q3lHuUerRg" target="_blank">有種高血壓,可能會要命。不管什麼時候量,血壓永遠都是高的,永遠都超過140。 這種人可能脖子會比較緊,後腦可能也會比較緊,背部常常都會覺得很不舒服。 有時候會擔心自己會不會有腦中風的危險,在這裡教大家一個很簡單的動作,超級簡單而且超級有效。…</a></td>
+ <td>2025-01-05 06:08<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>315</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8fZhFYwBAjOeMOklAC0P" target="_blank">耳咽管連絡鼻咽管 鼻塞、打噴嚏、流鼻濃 那些鼻濃有細菌 那細菌就跑到你的耳咽管 耳咽管連絡到耳膜 耳膜一受傷 那你耳小時就會不平衡 所以人家會陷暈 耳頻有控 常常是這樣去動、去扳 你就心臟的血管也比較不會硬化 心臟的循環也比較好 耳小時就不…</a></td>
+ <td>2024-07-05 10:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>316</td>
+ <td class="num">31</td>
+ <td class="txt"><a href="https://cofacts.tw/article/sBHYj44B0DEb0v6ccABy" target="_blank"></a></td>
+ <td>2024-04-27 07:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>317</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3g5j7l9f5ybg" target="_blank">https://youtu.be/3BALnOTNP3E?si=s6CFC5Dn-iMNIk1b</a></td>
+ <td>2026-02-08 12:35<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>318</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/nuwxyww56pl6" target="_blank">聽一下新加坡醫生的看法您就知道台灣疫情問題有多嚴重！多可怕！但指揮中心陳時中卻一點點都沒想到，難怪台北市長柯文哲急成那個樣子！ https://youtu.be/171R8u6my_Q</a></td>
+ <td>2021-06-17 07:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>319</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/13rxkdmnzpzc7" target="_blank">踢爆酒精！疫情期間8成品牌都有毒！大品牌都不滿70%！根本沒辦法消毒！打給經濟部回覆標示無法可管.…: https://youtu.be/caBL6svcotA</a></td>
+ <td>2021-07-19 09:28<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>320</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AJuP-Y0BBMtPEaE0UWue" target="_blank"> </a></td>
+ <td>2024-04-30 16:34<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>321</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/rvqw8m79n48s" target="_blank">全國案12xx：台北市萬華區54歲本國籍女】 (一) 活動史(4/26-5/11)：5/10發病日 1. 個案台北市萬華區楓香清茶館員工，工作時段為下午3時至11時(步行上下班)，餘調查中。 2. 4/26-5/6：自述每天都有上班。 3.…</a></td>
+ <td>2021-05-15 15:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>322</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ffp9_AAAGZxDncGcQYnznbEJs52RjZGdkY2xCYX5Q94" target="_blank">紅雞蛋 比 白雞蛋 營養? 以下為 1顆雞蛋55g 的營養標示 熱量 蛋白質 維生素A 紅殼雞蛋 73 kcal 白殼雞蛋 76 kcal 6.9 g 7.1 g 21 mg 38 mg 1.2 mg 0.9 mg 0.8 mg 0.6 m…</a></td>
+ <td>2024-03-30 07:30<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>323</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__-gAYABl9m_wZ8BnwH8AZ_9kAGPsZ4B3gGe-YABwf8" target="_blank">這是林百里兒子的FB,精準的說出 問題所在! 一個牙醫說:全世界怎能和台灣比? 現在想一想還真的有道理! 1:全世界那個國家會讓一個沒有公 衛常識的政客牙醫當防疫指揮官? 2:全世界那個國家的總統會阻止民 間熱情捐贈的救命疫苗? 3:全世界…</a></td>
+ <td>2022-05-20 22:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>324</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/8R4BceHOx3A_33_YAAAHuOWA5AjoJ_h_yA7iDsge2d4" target="_blank">R R R FREE RAPID ANTIGEN TESTS NOW AVAILABLE Please pick-up at Customer Service. Ontario 17 3 NO LD </a></td>
+ <td>2022-05-11 20:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>325</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/znObXpEBd3gcY0LpKDLZ" target="_blank">因為倉庫裡的電動床已經高達三十床以上了, 為了減少倉儲成本必須要把這些電動床趕快轉 介給有需要的人,以避免我們的倉儲成本,因 為倉庫是租的,如您的家人有需求或是有其他 需要輔具的人,再煩請幫我們轉介,連絡人電 話:0921733529 廖小…</a></td>
+ <td>2025-03-10 09:12<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>326</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/342hgmhjf6jjf" target="_blank">(sparkle)重粒子治療今上路！他的肝腫瘤消失「不痛、免打針、不吃苦」，治肺癌、攝護腺癌已有成果 https://bit.ly/41RYFOV</a></td>
+ <td>2024-06-30 06:03<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>327</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAB_0D_wH_w__APCO4IBvu-CwbzDvIOQ_cAMPwR_AD8" target="_blank">郵務送達(一般性) 移送案號: 址 案號: 感到時間 意事 注 郵遞區號:406 額: 應納 利 息: 金額 執行 必要費用: 事 法務部行政執行署臺中分署通知 移送機關: 交通部公路總局臺中區監理所臺中市監理站 107年罰執字第00059…</a></td>
+ <td>2024-06-11 19:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>328</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/34mztj7tunvpf" target="_blank">煮湯鍋時水容易溢出，只要在鍋邊緣抹上食用油，水就不會溢出了！</a></td>
+ <td>2024-04-18 02:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>329</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAb-f_5_AAGJ-YgBmP3jw-BuxCrEAP_55IfMAwAB__8" target="_blank">X 台灣家樂福 | Welcome to Carrefo... Carrefour 家樂福 活動日期:2020/04/19-2020/04/20 jonjour N44% 09:12 台灣加油 Carrefour Can Help 8億振興…</a></td>
+ <td>2020-04-21 07:03<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>330</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/D_4B_wP_AAQAAA_8D_wf_B_8H_wAAH7gAABf_T_wB_g" target="_blank">現有國道天眼裝設位置 國道-號 1.五股上出口 2.林口南下出口 3.竹北北上出口 4.新竹南下出口 5.頭份南下出口 6. 大雅南下出口 7台南北上出口 8.大湾南下出口 9.鼎金南下出口 10鼎金北上出口 國道二號 2.桃園東向出口 國…</a></td>
+ <td>2020-07-22 21:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>331</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_-D_ADhwOGQweP_Af4B_AAAAAAD_f___v36__gGDAAA" target="_blank">對面花 Randia spinosa 雨傘仔 Ardisia cornudentata </a></td>
+ <td>2019-03-10 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>332</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/yHK4-JABd3gcY0LpeJOA" target="_blank">我的個人資料或是手機號碼呢 外流出去了 那可不一定喔 因為原來有這種新的手法 現在呢有這些不肖的業者 他們就特別買了行動基地台 把它放在車上 所以隨機在街上開 所以呢也許你的手機 剛好就在附近 就會連到了他的訊號 這會造成什麼後果呢 欸你的…</a></td>
+ <td>2024-09-05 07:01<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>333</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AABv_m_-BOIAAP-HfwZ_g_6H_McAxwAP5P_M_pyUEAA" target="_blank">真的 假的 X 錯誤使用方式 1 可以到以下網址閱讀其他回應: https://cofacts.g0v.tw/article/ AVySvkCpyCdS-nWhuaN9 3 e En 4 r 請問柿子跟香蕉可不 可以一起吃? ㄓ 5 6 y…</a></td>
+ <td>2020-10-29 12:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>334</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ggGYDZmfn5__veCHwB2AMYB___-AWYAB6n3Q9YMDgI8" target="_blank">各位好朋友,近期若要出國我們 建議您不要使用快速通關,改採 用原始排隊的人工通關方式,讓 海關可將出入境章蓋在您的護照 上。讓您抵達目的地的海關,可 以快速從您護照出境章上,知道 您是從哪個國家出境,以避免您 入境該國時的困擾! 我們有客戶…</a></td>
+ <td>2020-02-06 14:28<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>335</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAA3_OAHP_9wPjEAdd4k_nAKP_hyEDX8cP4AMOAP9_g" target="_blank">口罩實名制上路 憑健保卡向健保特約藥局購買 1 3 2 奇數:星期一、三、五 偶數:星期二、四、六 4 每人一次限購2片 (7天内只能購買1次,2片10元) 依身分證末一碼,購買日期規定如下: 星期日不限身分證字號,只要 健保特約藥局有營業…</a></td>
+ <td>2020-02-10 15:32<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>336</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3sw74j9ue5agn" target="_blank"> 心臟的求救信號：長期出汗 大腦的求救信號：突然頭暈 肺部的求救信號：長期咳嗽 骨骼的求救信號：突然變矮 腎的求救信號：眼皮腫腳腫 肝臟的求救信號：臉色發黑 血管的求救信號：身體發麻 #別忽視您身體發出的求救信號，善待你的身體，多愛你自己一…</a></td>
+ <td>2025-04-07 23:24<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>337</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2xl4dv72e48va" target="_blank">https://youtu.be/5JPxAYH6Lbo</a></td>
+ <td>2025-03-19 16:02<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>338</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3dvcql3xi8vi4" target="_blank">逼特務遊街：川普的反腐大戲有多精彩 肖仲華  川普繞開國會直接任命馬斯克爲非政府機構的效率部部長，掀起了一場以“反腐增效”爲目標的聯邦政府大清洗運動。 馬斯克不負期望，一上任就將砍刀揮向了美國兩大特務機構，中情局CIA和聯邦調查局FBI。馬…</a></td>
+ <td>2025-02-15 17:54<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>339</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/dzq0hb0hdjpx" target="_blank">健康分享： 什麼是米酵菌酸？ 中毒時可能出現那些症狀，又常出現在那些食物上，如何預防呢？  「米酵菌酸」毒性超強，只要 1 毫克就可能致命，大陸就曾爆發多起涼拌木耳、河粉等死亡事件。  ⚠️提醒長者🧓凡食物保存不當、過期、發酸，看起來怪怪的…</a></td>
+ <td>2025-01-12 13:13<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>340</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/CZwmXI4BBMtPEaE0wvBv" target="_blank">你在家裡一定看到過這種小蟲, 千萬不要用手去拍, 說不定會要了你的命。 新聞報導中提到, 年僅30歲的吳先生突發眼部感染。 他正是用手拍過蟲子後, 為及時進行手部衛生清理, 將其細菌帶入眼睛中, 從而導致了感染。 僅在短短一天內, 導致眼睛…</a></td>
+ <td>2025-02-18 19:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>341</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/EPt6-4UBC7Q3lHuUpZmk" target="_blank">美國和中國合資在蘇州建立的全國最大的氫化油加工廠,就是把這個普通的植物油加氫,油就變成固態,然後往裡面加色素,再加香精,就變成了氫化油。 咱們這個早上,就是咱們現在吃飯的這個餐廳一樓,你們可以看看,它有,它在奶油butter旁邊有一個盒,上…</a></td>
+ <td>2023-03-08 13:06<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>342</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/-PvQZIYBC7Q3lHuUgvuG" target="_blank">我估估這片草莓地啊,一年就幾個月的時間,能夠創造的營收啊,幾十萬。 但是呢,也不能昧著一些良心隱瞞些什麼。 所以今天啊,給你們普及一下草莓的知識。 草莓從小啊,可以說是脾弱多病,喝著藥長大的。 從生根發芽,我們就開始的擔憂。 害怕草莓啊,生…</a></td>
+ <td>2024-06-05 11:00<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>343</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/rfUmd4sBAjOeMOklmXFD" target="_blank">醫生想告訴你的七大健康真相 您知道了可以少走很多彎路 身體也會越來越好 我老婆黃熱壽給大家分享一下 家人們點贊歡迎 家人們大家好 第一條呢 有三類人群不要泡腳來養生 糖尿病神經病變和糖尿病族的患者 有靜脈曲張和靜脈血栓的患者 有動脈閉塞缺血…</a></td>
+ <td>2024-06-03 23:02<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>344</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/247vtj6pfgwsn" target="_blank">https://www.facebook.com/profile.php?id=100090797066722 富士比 https://www.facebook.com/profile.php?id=100089958948624 唯心貸款</a></td>
+ <td>2023-05-10 11:53<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>345</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2lrwgym7bxvo" target="_blank">https://youtu.be/3tXmENZprFc?si=KGzXoiJF9VtOEhC9</a></td>
+ <td>2025-11-24 08:36<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>346</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1x2k52sj7vnjj" target="_blank">轉傳⋯⋯  那張一萬塊的人體工學椅，正在慢慢摧毀你。 ⠀ 這不是危言聳聽。 ⠀ 這是我花了三個月，試了五張頂級椅子，每天換八種姿勢，最後在物理治療師診間得到的血淚教訓。 ⠀ 我以為砸錢就能解決問題。 ⠀ 但我的背痛卻越來越失控。 ⠀ 那天，…</a></td>
+ <td>2025-10-20 10:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>347</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/RoLnoY8B3RbBUEe2FSLS" target="_blank">一杯咖啡,一片麵包,是不是很多小姐姐早餐的標配呢? 膽長期這樣吃,膽汁可能會從半透明的金黃色的正常膽汁,變成深墨綠色的粘稠的膽汁。 膽囊相當於膽汁的倉庫,當我們進餐時,膽囊收縮,把膽汁擠到腸道裡,幫助消化。 人睡了一晚上,膽囊裡積聚了一夜的…</a></td>
+ <td>2025-08-06 17:14<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>348</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/21misfre32u8x" target="_blank">115年國軍一月薪資一次看 二兵起薪：57150元 下士起薪：63720元 少尉起薪：73500元  ●第一類戰鬥： （+24000第一類戰加） 二兵：81150$ 一兵：83000$ 上兵：84850$  下士：87720$ 中士：918…</a></td>
+ <td>2025-07-31 17:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>349</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1c6h5ehbkzc4j" target="_blank">🛑安檢人員明確表示：昨晚剛下達全中國機場統一指令 ✅ 只有有「3個C」標誌的充電寶才能通過安檢 ❌ 沒有標誌 → 一律沒收，不管品牌或容量！  😭 團員們的充電寶只能全數留在安檢處，無法帶上機！  📢請立即提醒所有： 	•	即將回台的團員 …</a></td>
+ <td>2025-07-09 10:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>350</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2cwitw70t63jw" target="_blank">醫師震撼警告:70歲後過度行走,竟會加速老 化?必做這5件事,遠比盲目走路更關鍵!    對七旬長者而言,維持適度的步數固然 重要,但更關鍵的是「五大核心要素」:第一,肌 力訓練,因為沒有足夠的肌肉支撐,再多走路也 只是在消耗身體本錢;第二…</a></td>
+ <td>2025-07-17 10:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>351</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/tII3zY8B3RbBUEe2gG-J" target="_blank">澳洲宣布啊這些美國進口的食品,澳洲人都不能再吃了 澳洲的這一紙禁令,揭開了美國食品安全的遮羞布 這些在美國超市隨處可見的食品,其實在160多個國家都是禁止的 尤其是最後一個,您絕對想不到 首先要介紹的就是被中國和歐洲等160個國家禁止的美國…</a></td>
+ <td>2025-08-19 11:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>352</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2har14qjsejz3" target="_blank">🐀 漢他病毒回來了,而且就在雙北 今年台灣已經有確診案例。  🦠 怎麼傳染? 老鼠的尿、糞、口水乾掉後,會變成肉眼看不見的微粒飄在空氣裡。人吸進去就可能中。不用被咬、不用直接接觸。  😷 症狀很會偽裝 初期跟感冒、腸胃炎幾乎一樣:發燒、畏寒…</a></td>
+ <td>2026-06-02 22:52<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>353</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/KPTlr4oBAjOeMOklZKjk" target="_blank">一名年輕女子驚爆 騎車在路上被陌生男子問路 好心指引 沒想到這時 竟突然遭對方拿起不明液體塗抹大腿 女子嚇得加速逃離 但沒想到突然一陣暈眩 懷疑遇上新型 迷魂到 陌生男一路騎車狂追 甚至笑稱你逃不了了 女子跑到便利商店求助 對方看到人潮 這…</a></td>
+ <td>2026-04-01 21:40<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>354</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/9_QY9IoBAjOeMOklld08" target="_blank">這是真實的案例嗎? 這是真實的案例,而且還不只發生一件。 觀眾朋友們,這段時間不要去上廁所,不可以轉台,這是很重要很重要。 因為詐騙集團現在不斷地升級升級再升級,你升級到什麼程度呢? 你應該知道很多致富命令都是假的。 你也知道很多檢察官都是…</a></td>
+ <td>2024-10-09 22:34<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>355</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/CHGgNZABd3gcY0LpZW4F" target="_blank">大家快看這個小孩,他媽媽正拿著吹風機吹東西,不料孩子將手中的氫氣球砸向吹風機,瞬間爆炸,結果他媽媽被大面積燒傷,結果皮膚燒傷成這個樣子了,太危險了,再看這個視頻,這個男的他本想把氫氣球戳破扔掉,結果發生爆炸,把眉毛,睫毛,頭髮這些都燒掉了,…</a></td>
+ <td>2024-08-19 15:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>356</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/mimuh4kBFLWd9xY2h6KF" target="_blank">日本老年醫學研究發現,步伐小的人認知功能衰退的風險可達三倍以上。 步伐,也就是步幅變小,也是腦中某處的迴路堵塞所導致。 但是,只要你努力邁大步,老就會為了實踐這點,創造出新的迴路。 1.重點不是走路速度,而是步幅的大小。 研究者發現,步調快…</a></td>
+ <td>2024-10-30 12:44<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>357</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/GBg-Pj5_wEPL48PDw8GDwQAADBj_uf_P27nAAcQJh_8" target="_blank">*地震時 電梯資料線 THKELEV.com 電梯門外空間最安全 分享地震常識.如居住大樓.先打開對外大門.走到電梯周 邊.勿進入電梯,朋友的先生是工程師.他稱那位置為減力 牆.是一棟大樓最穩固的位置.紐西蘭曾發生七級以上地 震.一棟大樓全…</a></td>
+ <td>2022-04-15 15:37<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>358</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2vsgagxg5oeb4" target="_blank">李正F B  剛看完《張忠謀傳》，趁還沒失憶，先澄清一些台灣最大宗的瞎掰謊言：  ——「國民黨創立台積電？」 ——「李國鼎力邀張忠謀回台接任台積電董事長？」  才沒這回事！  Q：李國鼎邀張忠謀回台，是要他當台積電董事長？  錯！ 1985…</a></td>
+ <td>2025-08-17 14:14<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>359</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1g6d9z7n1ptjz" target="_blank">湯姆瓊斯在台灣民國50年代拍攝的照片非常珍貴,片子很長音樂很美. 疫情不出門,泡杯咖啡吧!  https://youtu.be/D1-d3Pr8Teo </a></td>
+ <td>2025-04-11 03:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>360</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/y3j1ulh8mv8x" target="_blank">來自中國的10位女性的舞蹈非常協調和同步，已被吉尼斯世界紀錄所記錄。  它的美麗之處在於它是帶有印度音樂的中國舞，為新春開啟新氣象！</a></td>
+ <td>2022-01-06 01:03<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>361</td>
+ <td class="num">30</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3nafzyn0frctc" target="_blank">仔細看，搞不好救了自己也救了孩子。  朋友的小孩5/1確診得不到任何緊急救助，媽媽只能夠以自身力量，自己救自己的小孩子  https://www.facebook.com/100000633432997/posts/567025050967…</a></td>
+ <td>2022-05-11 08:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>362</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3llm0i9dchpdy" target="_blank">台灣到底怎麼了？ 忙著打擊異己  鬆動了根本？ 社會失去是非？ 家庭功能不彰？  只能眼睜睜看著一步步沉淪......！😥  李建平院士  今天最大的新聞莫過於台大學霸林睿庠因販毒在美國被捕，這件事情背後有太多值得我們深思與檢討的地方。  …</a></td>
+ <td>2025-06-03 13:45<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>363</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2bh6u4jjiocf9" target="_blank">https://www.facebook.com/share/r/1GV1X9CWnS/?mibextid=wwXIfr</a></td>
+ <td>2026-06-27 08:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>364</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/yi9nttj0l8si" target="_blank">http://hf7.tw/4/GCKmK1 吳家淇 【瑪吉Pay 法務通知 】 店家下單-一般商品分期帳款嚴重遲繳屢催不理，法務存證信函已寄出到戶籍、居住、公司，公司使得向地方法院申訴欠款民事+詐欺侵占刑事案件。已安排派員至往住戶、公司外…</a></td>
+ <td>2026-01-04 13:36<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>365</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3t8o2gfml8h69" target="_blank">https://www.youtube.com/watch?v=cVRoOImy-cQ</a></td>
+ <td>2025-12-23 07:37<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>366</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/92v3uYgBvEj1WkaUdxNW" target="_blank"></a></td>
+ <td>2023-06-28 09:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>367</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/vnwHfwAfADeAv4H_gB-AP8v_wB_AD8AH8AfwD_gf4Ac" target="_blank"></a></td>
+ <td>2022-07-31 17:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>368</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/BH58fnxmCCYIJgzeDP4O_gTiD-I_4D_gfxB_fgf-AAA" target="_blank">合南同屬優先接種 彩雲陸警 海警:海峽南部.東南海面 台南 he AstraZene 15ml smbinant]) Panasonic 1423474 Lot ▾ EXP▼ ABV3025 05-2021 CBC東森新聞四 124萬劑 0…</a></td>
+ <td>2021-06-08 17:50<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>369</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAC99wf_Eh-UDQAD5f-B_4AngC-X1bcb_78AAAAA__8" target="_blank">0:57 9 Sam Lam 25分鐘・品 疫苗議題,非常直接,無需混淆焦點。 毋庸置疑,全國 2300 萬人民肯定沒有任何一人不支 持台灣自己研發國產疫苗,不用扯黨派,不用扯愛不 愛國,大家只想要保護自己的生命安全和經濟收入。 大部份人震…</a></td>
+ <td>2021-06-15 12:25<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>370</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__8ADwAH3A2QAdXflUW1VYQhzmHOYfFfAA-B_wB_kP8" target="_blank">22國暫停接種 AZ 阿斯利康/牛津疫苗 歐洲國家 丹麥 挪威 荷蘭 德國 斯洛文尼亞 奧地利 羅馬尼亞 葡萄牙 西班牙 意大利 保加利亞 南美洲國家 愛爾蘭 委內瑞拉 非洲國家 日本.南韓.南非...及上列多國 禁打AZ疫苗 加拿大也禁止…</a></td>
+ <td>2021-07-21 21:24<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>371</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/IYot24IBv5it-Cx_hl3U" target="_blank">比例 勺均衡好油 FOR A HEALTHY TOMORROW 健康益多 Ⓡ -讓明日更健康、 黃金比例純芥花油 Solden Ratio 100% Canola O SGS 470項 檢驗合格 朝殘留檢驗 健康 方程式 AGV 100% …</a></td>
+ <td>2022-09-02 16:04<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>372</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gAPgBRn9H_8DAB_RP_I_4H_gf-Af4AEwB9kPwQ_BD8c" target="_blank">民視 </a></td>
+ <td>2020-06-26 21:50<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>373</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/r_mP-4IBhAmJyZbB1-WSRYe5kAH0WavjgQOAAZ3rn_8" target="_blank">群組請注意,别人可以下載你 LINE 的頭像,然後把暱稱改成 你的名字,再把你封鎖,然後 完全可以冒充你,其他人無從 分别。所以一些不法份子利用 這點,開始行騙,如果有人用 我的頭像和名字借錢,一定是 假的,並請打個電話給我確認 一下。看到…</a></td>
+ <td>2023-04-17 20:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>374</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ySkTGYkBFLWd9xY2HizF" target="_blank">豬油是所有心腦血管的元兇,但是事實上豬油絕對是被冤枉的。 這十年最熱的一個話題就是關於豬油能不能吃的問題。 那我們看一下豬油究竟它是這個貨根還是營養品。 其實豬油是非常安全的,豬的基因跟人體是極其相似的。 所以它的這個油的飽和脂肪配比和不飽…</a></td>
+ <td>2024-10-01 11:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>375</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAAD8I_8v_4D_AP4A_gH_Af8f_w_gAwAv_0P5wAHAA8" target="_blank">4016K8 </a></td>
+ <td>2020-11-28 14:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>376</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/fvcRaY0BAjOeMOklZsza" target="_blank">在網際網路上傳播的影片的逐字稿，， 在網際網路上傳播的影片的逐字稿， 在網際網路上傳播的影片的逐字稿， 在網際網路上傳播的影片的逐字稿， 在網際網路上傳播的影片的逐字稿， 在網際網路上傳播的影片的逐字稿， 在網際網路上傳播的影片的逐字稿， …</a></td>
+ <td>2025-01-03 16:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>377</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/30e84ayuqma1q" target="_blank">可能馬斯克自己都沒有想到，接受了一個看似無聊的“政府效率部部長”頭銜，竟然讓他打開了美國政府財政管理的“潘多拉魔盒”。  荒唐、諷刺、滑稽、令人不可思議，這些名詞用來形容美國政府的財政開支，簡直是再恰當不過了。  當川普說要給馬斯克一個“政…</a></td>
+ <td>2024-12-11 19:51<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>378</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1ydwh9r0iw1iv" target="_blank">https://youtu.be/C7MexqyLhwU</a></td>
+ <td>2023-08-20 08:19<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>379</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gWND1Y4BUCqzrknpqwMe" target="_blank">我們並沒有預期會看到 流動的液體 從腦中滲出毒品 如果你有選擇 這就是你需要睡覺的方式 這就是為什麼 你是一名心理學家 有很多人有不適康的睡眠 我們生活在一個世界  在這個世界中  在這個世界中 我們一直都知道 當你睡覺的時候 你把記憶放下…</a></td>
+ <td>2024-10-04 03:13<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>380</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/eha14dcdd4be" target="_blank">東門城圓環，四週所有的道路，地上都用油漆寫上(停車再開），騎車或開車要進入圓環，一定要先暫停，腳點地，再繼續行騎，否則遇到科技執法，一定被拍照 一定要小心。</a></td>
+ <td>2024-02-26 17:37<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>381</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/KBD7go4B0DEb0v6ceevv" target="_blank"> </a></td>
+ <td>2024-04-07 11:26<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>382</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3iviaxg5zve79" target="_blank">https://beautygirl01.com/archives/246613</a></td>
+ <td>2022-04-08 11:56<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>383</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/ePT4B4sBAjOeMOkl8fXr" target="_blank"> </a></td>
+ <td>2023-10-15 18:25<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>384</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2pe38bdif300u" target="_blank">開除190多個印度高管能救美國？  矽谷企業界「找到」阻止美國衰落和印度化的辦法了？ 星系花園玉衡 2024年11月29日美國  以下文章來源於星系花園瑤光 ，作者鄭好 （本文信源：FP、印度時報、經濟時報、NDTV、商業內幕、Tiktok…</a></td>
+ <td>2025-11-02 16:31<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>385</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/dfiasY0BAjOeMOklt0Lj" target="_blank">字幕由Amara.org社区提供 感謝您收睇時局新聞,再會! 多謝您收睇時局新聞,再會!</a></td>
+ <td>2024-06-07 07:33<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>386</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/12o11cp713rf2" target="_blank">這些珍貴日治時期寶島臺灣的的錄影集，據說是保存在美國的圖書館，最近有人從美國拷貝帶回來台灣。  第1集  https://youtu.be/a6UcjqPgdqQ  第2集  https://youtu.be/uspZwxVNyBE  第3…</a></td>
+ <td>2025-04-18 15:14<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>387</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/28qamgkoj9gum" target="_blank">kalaok二年前委託陳亮恭博士（現任榮總關渡院長 交通陽明大學教授）探索預知大限潛能的研究專案 陳博士帶領台中榮總團隊已納入200位85歲以上志願者參與追蹤探索。此研究計劃爲期6～12年 今年07/20 將發表第三年研究成果 本研究的宗旨…</a></td>
+ <td>2025-03-25 21:39<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>388</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/uYvVXIQBv5it-Cx_C9E4" target="_blank">大蒜水可以喝嗎?大蒜水是眾多專家的最愛。大蒜水對我們的外表和健康非常有益。但它真的那麼棒嗎?只要你堅持喝,對你的身體就有很大的好處。你的腎臟會變健康。腎臟感染是件非常棘手的事情,但大蒜水可以預防它。科學家已經證實了這一點,一項研究指出,大蒜…</a></td>
+ <td>2025-01-24 17:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>389</td>
+ <td class="num">29</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1qnekwa28xfrz" target="_blank">台新信用卡邀您回傳簡訊【3】參加抽【iPad Pro 11吋】活動：112/10/29前回傳且完成驗證後，即可獲得抽獎序號，112/12/15前公佈中獎序號於活動網頁，詳 tsbk.tw/597bv7 ，專屬優惠 轉寄無效，謹慎理財信用至上…</a></td>
+ <td>2024-02-17 18:14<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>390</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/27noiigssnxoo" target="_blank">https://youtu.be/SFScpbfyZFM</a></td>
+ <td>2026-04-14 10:08<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>391</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2gcus3iz1ka3o" target="_blank">https://www.lifelong-learning-voucher.com/</a></td>
+ <td>2026-05-21 22:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>392</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/mn15m5lg4b0w" target="_blank">世界上最贊的16位醫生 第一位：多踮腳，腳跟不著地 第二位：多握拳，伸展手指 第三位：多轉眼球，上下左右轉動 第四位：多叩齒，上下牙齒輕輕叩擊 第五位：多揉腹，以肚臍為中心，順時針輕柔打圈 第六位：多梳頭，用指腹從前額向後腦輕輕梳理 第七位…</a></td>
+ <td>2026-05-21 20:43<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>393</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/H8OPk_gHwGEAOQD5Afvx_wNvGf8B_4AYzH_zOoi4gBk" target="_blank"></a></td>
+ <td>2022-03-03 05:09<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>394</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/sbk2idzux2z3" target="_blank">新冠痛毒可在物體表面存活的時間隨田曙嬰紙張跟衛生紙3小時鸚﹍紮(仁如錢帳﹚﹁4小時鸞i紙箬24小時(1天﹚﹒鍾”木杜、李板48小時(2天﹚雪》弋服48小時(2天﹚”z。不鍔鋼，48﹣72小時(2~3天﹚邢﹍塔膠(以pPP為例﹚﹁72小時(3…</a></td>
+ <td>2021-06-15 12:17<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>395</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/Bf8QP8AfQY8v_wf3AHMAcOPx4fHB4BPgYAD_wH_Af-A" target="_blank"></a></td>
+ <td>2019-07-12 17:43<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>396</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3n0vj0q3qb0ji" target="_blank">民進黨前立委郭正亮說：  「 這種選舉大概是我活了一大把年紀，看過最低級的一次選舉 」  但我想說的是，沒有什麼最低級，如果你各位不出來投票的話，未來只會更低級，因為下流的政客用下流的選舉手段一旦有效，只會讓他們食髓知味、變本加厲  所以，…</a></td>
+ <td>2024-01-03 22:29<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>397</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/A4Z4H3gfYD8AH4ADf-Z_4vL-n6L_wAAAAAeAD8vP-d4" target="_blank">疫苗原理 BNT、莫德納 → mRNA疫苗 將病毒表面的棘蛋白mRNA片段打進人體 AZ、嬌生 → 腺病毒載體疫苗 病毒的棘蛋白包裹在猿猴的腺病毒內, 再注射到人體 大愛電視 Da Ai Television </a></td>
+ <td>2021-07-03 09:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>398</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_KekBd4nwA2ggaEhgC___9xt4X-AHaMBgAP__4ABgf8" target="_blank">我在念聖心女中的時候,學校的操場是在淡水 河畔,雖然我不喜歡運動但是我很喜歡在操場 上看風景,看天空中偶爾經過的滑翔翼..... 聖心學校是修會的姆姆們篳路藍縷為了女孩的 教育所辦,當時建校的一切經費都是來自全世 界聖心學校的捐款,常態的收…</a></td>
+ <td>2021-06-17 07:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>399</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/4f-HAUf_gAH-AfxC_gH-AHYAfgB_4H_ge-B_4EfgS0A" target="_blank">? 90 約錢用在刀口 109年度防檢疫政策整合行銷案以保及經實列入情形 得標廠商 決標金額(元) 決標品項 凱絡媒體 服務(股)公司 立法院攤開資料 6458萬元 東森電視 事業(股)公司 年代網際 事業(股)公司 民視文化 事業(股)公…</a></td>
+ <td>2022-07-16 18:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>400</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/68fm3571tdu0" target="_blank">苦苓日前在臉書上寫道，既然民進黨「死也不肯」真心檢討，那就由他這個多管閒事的局外人來說明，並列出下列16個原因：  一、想選的偏偏不給選（連初選都沒），不想選的硬是叫去選；  二、學位一個一個被取消了，那個「供應」學位的卻什麼事都沒有；  …</a></td>
+ <td>2023-06-21 12:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>401</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3hmqgbkd5jby0" target="_blank">紐約 工商信息 Solmet超級綠能技術 終結能源危機的新發明  【紐約訊】  2022-10-05 01:00  Solmet集團CEO鄭森表示，這一顆超級能源晶體將會改變世界格局。 Solmet集團CEO鄭森表示，這一顆超級能源晶體將會…</a></td>
+ <td>2023-09-06 10:46<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>402</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3pe7njsi4unf3" target="_blank">有一位網友她年輕時腎絲球腎炎住國泰醫院，國泰醫院腎臟科醫師，好像叫馮祥華，，醫生告訴她不要吃這些東西，那是麵粉洗到最後的產品。吃後，腎臟不容易過濾之，傷腎。  醫生說的話，她記了一輩子，從此不吃此類食物，非常傷腎臟。</a></td>
+ <td>2024-06-09 12:46<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>403</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/iPXXn4sBAjOeMOkllqFK" target="_blank">今天我們要來看看如何地震和地震影響你的血液。 我們會把血液放在一張螢幕上, 一張微跡螢幕上, 讓我們來看看。 如您所見,所有的紅血栓都被堆疊起來了。 讓我們看看地震能否有所改善。 現在地震正在發生, 現在地震正在發生, 地震正在發生, 地震…</a></td>
+ <td>2024-08-11 14:00<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>404</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/oPmUVYcBn6k8q-JUVJUv" target="_blank">我們用一顆大蒜就能測出來你家的油是不是地溝油,把剝好的大蒜放到油裏面靜置五分鐘。 如果大蒜沒有變顏色,說明你家的油很安全。 如果大蒜變成了綠色,那才有可能是地溝油哦。 你學會了嗎?快來試試吧。</a></td>
+ <td>2023-11-13 17:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>405</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2hM0ZPAP-A_4A-eD54HhwfYh_gH-A_AD8AH4AfgD_H8" target="_blank">889-PJH </a></td>
+ <td>2021-05-30 18:36<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>406</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/P_x__kAGAQLP49EDw8PIQ7_iv-KfAoAC_i_QJ8BnwAc" target="_blank">中華電信 4G 16:55 +886 916-183-586&gt; 訊息 13:48 包裹已派發.請您 及時查收.http:// wexcv.xyz 65% </a></td>
+ <td>2020-03-31 16:13<br><small>已有 1 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>407</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/kAOAAwh___8H_wP_kSHYAf__B_8QAaAADxnXQIBBP_8" target="_blank">中華民國內政部警政署 National Police Agency, Ministry of the Interior 警政服務APP推播服務 Of LINE 很多人不知道,原來「身分證遺 失」,只需要打一通電話!? 2018/08/14 …</a></td>
+ <td>2023-10-28 11:55<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>408</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/P_A48D7wGsAekh_wf_ASwD_wBwA_4D_gGAA_4T_xOwc" target="_blank">以下兩個 官方帳號,請不要 加,已經確認是釣 魚帳號。 請勿再傳了喔! 哪裡買 口罩哪裡買? &gt; 附近剩餘數... 敗口罩 10:43 上午10.3 </a></td>
+ <td>2020-02-08 19:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>409</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/rhjpviqg4uiy" target="_blank">上海復旦大學重磅突破：茶是打通人體經絡最有效的食品 《環球》雜誌2022-10-03  復旦大學用現代科學技術證明了“看得見的經絡”，這是歷史性的突破；同時經過幾十種食物實驗，也證明了茶是最有效打通經絡的食品。中醫和茶都是中華民族瑰寶，我們…</a></td>
+ <td>2025-03-17 21:15<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>410</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__8EZcAPYAVgBWA1dqd-p_elgaUDpQetBg8EPzB98Xk" target="_blank">好友請一定要看 檳城住 27 樓的於先生帶著四歲女兒坐電梯, 一手迅速按亮所有樓層按鍵 電力恢復以後電梯在 16 樓停住 這是電梯急墜自救法, 人都有可能要坐電梯, 不要按贊請你轉發讓每人都知道 電梯急墜自救方法, 功德無量, 也許看一眼就…</a></td>
+ <td>2023-11-01 12:06<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>411</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/A_-__4AJggGEsf__MAB8YP_9wAGHIcBn4D_P_4cBgAk" target="_blank">阿愷報氣象 15 分鐘. 提醒大家!高速公路路肩開放是一個大陷阱,因為速 限改為60公里了,與主線道的限速差很多,因為不知 道這個規定,限速110,跟平常一樣開到111,被開了 一張五千塊的罰單,天啊!是我收過最貴的紅單,可 能我的資訊太慢…</a></td>
+ <td>2020-04-26 15:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>412</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/txsrsevcjnt2" target="_blank">裁決所通知，預計112年6月後將實施記點新規定： 1.車行紅單之違規記點，要強制歸責給駕駛人。 2.1年12點會吊銷駕照2個月，2年24點會註銷駕駛。 3.若記點紅單無法歸責，會吊銷車牌2個月。  ●提醒駕駛不要違規● 以後拍照舉發的記點紅…</a></td>
+ <td>2024-03-20 12:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>413</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1js1cfqevhdlv" target="_blank">獨家｜等疫苗防疫加一招！新冠病患潄口能降病毒量　醫曝新研究一般人也適用 https://tw.appledaily.com/life/20210606/Y2IEXIKVMZCPPLUNIW7UQPRMHU/</a></td>
+ <td>2021-06-10 16:10<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>414</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/23GMEZABd3gcY0LpCS4R" target="_blank">蜂窩鍋我認為是最坑人的 十多年前 我在德國展上就看過了蜂窩鍋 誒 很聰明 德國人歐洲人不愛用蜂窩鍋 他就包裝營銷一下 賣給了自己人 說到蜂窩鍋 你會想起哪個品牌 對 就是它 為什麼我說蜂窩鍋是最坑人 你們耐心聽下去 假設這是一個不鏽鋼原片 …</a></td>
+ <td>2024-09-19 12:29<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>415</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3vbCYowBAjOeMOklVouz" target="_blank">字幕由Amara.org社区提供 字幕由Amara.org社区提供 全片以Google Pixel 4拍攝 </a></td>
+ <td>2024-10-18 11:29<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>416</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/whymcixh1qq3" target="_blank">https://www.instagram.com/uc._.lovelife?igsh=MWFvNnRmZDh1bnozMA==</a></td>
+ <td>2026-01-19 09:01<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>417</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/6k1t4oiitnks" target="_blank">弘一法師曾說： 如果你心眼好又有德行，那你一定有福報，如果有福報卻發不了財，請不要疑惑，是你的福報轉化成了健康的身體、平安的日子、溫暖的家庭和有良德的子孫。福報不一定讓你很有錢，但一定會讓你成為最圓滿的自己。人生沒有幸福不幸福，只有知足不知…</a></td>
+ <td>2025-08-27 19:02<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>418</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/u3fust1hdj98" target="_blank">踢爆這些最新騙局，你一定會被騙的！現在騙子連AI也用上了，一旦找上你，存款歸零！上週我差點被8歲小孩騙光所有積蓄...趕緊把影片看完轉發給你的家人朋友！  https://youtu.be/FwTvPI187SA?si=zne6-CkGGj…</a></td>
+ <td>2025-09-06 09:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>419</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3tfiug92ayy4y" target="_blank">現在車禍蟑螂越來越多了，而且非常懂保險及報案程序和理賠，賺的很兇。所以千萬要把影片看完。</a></td>
+ <td>2023-09-21 13:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>420</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/oP8gH-P____iD-6P4CPgB_Jz5APkV-BDIGIgTin-vn4" target="_blank">董事長 黃明端【2】 大陸,冠狀病毒專家鐘南山 84歲院士 再次強調:別出門,端午節(6月25 日)過後,再看疫情控制情況! 警告:一旦染上,就算治癒了, 後遺症也會拖累後半生!這場瘟疫 比17年前的非典更嚴重,用的藥 副作用更大。如果出了…</a></td>
+ <td>2020-06-30 23:04<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>421</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/B_AH-A54PHwG-AZ4B_wH_AYPDg88H5zjHfMfAN_A8Ac" target="_blank">冠状病毒在到达肺部之 前,会在喉咙里停留四 天,此时患者会开始咳 嗽并出现喉咙疼痛。如 果他喝很多水,用温 水,盐或醋漱口,就能 消灭病毒。传播这个信 息,因为你可以用这些 信息来拯救一个人。 提醒你们 BATCHMATES </a></td>
+ <td>2020-03-24 12:20<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>422</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/j9__QwHzAAGDANMfg_j_iP-PAYcAH4Luz0aLBN8E_wQ" target="_blank">2021/1/4 11:31 2021/1/4 11:31 35 卡 味丹· Lipto ipton 式 28 2021/1/4 11:30 大同區 I 20 20 2021/1/4 30 大同區 波 喝一 隨時 </a></td>
+ <td>2021-11-04 08:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>423</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/v_3AAcAD___gF_mTwgPwl8ADwB_4H_gf-B_4H_gf-B8" target="_blank">AZ AstraZeneca/Oxford 阿斯特捷利康藥廠與英國牛津大學合作 研發,又稱AZ疫苗、牛津疫苗,屬於腺 病毒載體疫苗,雖有效性不如其他疫苗 高,但價格相對便宜,且無需冷鏈運送 便利性高,是AZ疫苗的最大優勢。 Corona V…</a></td>
+ <td>2021-07-18 22:35<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>424</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1l3b3k7333ekq" target="_blank">打通血管密方  一位居住在倫敦的人的親身經歷及現身說法，他去巴基斯坦開會的時候，突然胸口悶痛，後來被醫院驗出，他的三條心血管已經被嚴重堵塞，需要做支架手術。 預定手術的時間是一個月後，在這個期間，他去看一位回教國家古法治療師。   這位Ha…</a></td>
+ <td>2026-03-31 20:27<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>425</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/6guq7g9vn5u8" target="_blank">台灣的仇美情緒，正在悄悄醞釀  文／偉哥觀察  在台灣，批評美國，曾經是一種政治禁忌。但今天，情勢正在轉變。一股新的情緒，正悄悄在人民之中發酵——仇美情緒。它不是出於反美情結，也不是來自左派的意識形態，而是來自人民對現實的冷靜覺醒：我們正在…</a></td>
+ <td>2026-03-21 21:48<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>426</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_wLAGPAw_znwP8E__x4AAIBwgXhzeHv5MDh0OP889wA" target="_blank"></a></td>
+ <td>2020-06-02 09:41<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>427</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/AAA__wYMf_x__H_8A3AAAD_9AAAZ-B_4fv4P4B_5AAA" target="_blank">新冠病毒有七怕 1.怕紫外線 2.怕56度以上高溫 3.怕空氣流通 4.怕含氯消毒液 5.怕75度酒精 6.怕你認真洗手 7.怕人體強大免疫力 增強免疫力八友 1.睡眠充足 2.優酪乳早點 3.常吃洋葱、大蒜 4.常喝蜂蜜水、檸檬水、茶水 …</a></td>
+ <td>2023-10-24 00:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>428</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1ybik9pq50v4s" target="_blank"> 蘋果要換女掌門？這個傳奇女人年薪是庫克8倍！  年薪七千萬美金的傳奇女子，  她究竟是誰？  Angela Ahrendts  在今年2月份  蘋果2018年度股東大會上，  很多人注意到這樣一個細節：  蘋果CEO庫克首次提到  “傳遞…</a></td>
+ <td>2025-08-17 15:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>429</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1g9ufzaiy4u0z" target="_blank">黄智賢FB文  張忠謀與白眼狼  1  張忠謀跟賴清德、”晶片戰爭”作者克里斯米勒 ，參加一場”半導體世紀座談”。 他的發言，果然動見觀瞻。 對張忠謀還有幻想的人，應該可以醒一醒了。 他力挺美國遏制中國。 他扭曲台積電發展歷史，掠奪前人的功…</a></td>
+ <td>2025-03-21 15:21<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>430</td>
+ <td class="num">28</td>
+ <td class="txt"><a href="https://cofacts.tw/article/hmJi0I4BUCqzrknp_Pwp" target="_blank">三种水果轮流吃 越吃血管越干净 血管通畅 全身轻松 大家好 我是中医卢以馨 这个视频建议30岁以上的朋友一定要看完 因为随着年龄增长 血管很容易发生动脉硬化 长斑块 血管堵塞等问题 因为身体的代谢能力下降 就会导致多余的血脂无法及时代谢 才…</a></td>
+ <td>2024-07-29 09:16<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>431</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3t9kd4qoxhcm" target="_blank">全聯事情大條了！https://youtu.be/CKbSY50Jubk?si=VpM-cQ59eC6bjDeP</a></td>
+ <td>2026-05-20 13:57<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>432</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1tcrz9wo05epl" target="_blank">https://youtu.be/KgMDcfXa2tQ?si=A87kfYmSe6GjXLMp</a></td>
+ <td>2026-03-02 20:36<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>433</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/392iy3wbhpm5o" target="_blank">茶葉內幕大曝光！喝不喝茶的都快看看！太驚人了！：https://youtu.be/XgFQgZXgB0E</a></td>
+ <td>2022-10-26 18:25<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>434</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/291i0ojei8s01" target="_blank">高端母公司基亞 (3176)，2014 年時炒作肝癌神藥，技術來自於澳洲藥廠普基，股價翻倍。(這故事有沒有很耳熟？)  結果三期數據出來，效果變笑果，連續跌停 19 根，並連帶台灣生技股被害的全面崩盤，基亞被稱為台灣生技核彈。  多少基亞股…</a></td>
+ <td>2021-07-01 00:47<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>435</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/vd7dvez2b35g" target="_blank">Delta隨時會進入台灣社區，政府會採取嚴格防疫措施。因此個人要準備一個大背包，裡面裝3套換洗內衣褲、1套外衣褲、2條毛巾、牙刷、牙膏、漱口杯、拖鞋、洗面乳、肥皂、一套外衣褲、少量封裝食物（堅果、栗子、瓶裝亞培安素、平時的慢性病藥2星期份量…</a></td>
+ <td>2022-03-02 12:36<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>436</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gm9yrnlfz9wu" target="_blank">快檢查手機！LINE未更新到「這版本」　明天起就不能用了 https://www.ettoday.net/news/20231031/2613400.htm?from=ettoday_app</a></td>
+ <td>2023-11-03 20:53<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>437</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/wAHMI4gH___396CnghGMMd95gwmEEcOvgwMAITA___8" target="_blank">@樂團向患有老年癡呆症的當代 指揮家~小澤征爾 愛的致敬 這不是滑稽表演!當代最偉大的 日本指揮家~小澤征爾,患上老 人痴呆症,真正痴呆了。在這首 交響樂演奏中,樂團用感人的愛 向他致敬!向音樂致敬,幫助他 完成謝幕演出。人都有老的時 候,…</a></td>
+ <td>2022-07-27 12:25<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>438</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/__7P4oACiELphseGx4bHBsOGw4bDhsuuB8AHyEfE3_Y" target="_blank">dreamstime dreamstime dreamstime dreamstime.com dreamstime dreamstime dreamstime dreamstim ID 181389419 © Sujataj0999 </a></td>
+ <td>2021-05-29 17:22<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>439</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/R_japo0BAjOeMOkltDE9" target="_blank">中風前一天,身上會出現這個現象。早點知道能救命,為了家人一定要看。 中風在我們的生活中比較常見,尤其是在老年人當中,有些患者因為中風導致死亡的概率不斷加大。 有些患者即使搶救成功,也有可能會出現偏癱的出現,所以中風是一種非常危險的疾病。 那…</a></td>
+ <td>2025-02-11 07:59<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>440</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/VCkb9YgBFLWd9xY2JwZ3" target="_blank">炎症不斷的蔓延,變成惡性腫瘤,身體裡面需要兩大催化劑。 一大催化劑是糖,另外一大催化劑是燕瘍。 如果是醫生跟你說,查一個Pattern CT,讓你喝一杯高濃度的糖水, 他會發現身體的哪一個地方吸收糖分的越多,醫生就告訴你,那個是癌症的轉移造…</a></td>
+ <td>2024-07-07 10:12<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>441</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/vw-ACcEPi9v__3ADeAB-AP8A_gD-IP4g6yHjJ-ET8BM" target="_blank">充電時,他沒有拔下充電器便直接接聽。幾秒 後,強大電流流過手機,他被擊倒在地。父母 沖進房間,他已失去意識,心跳微弱,手指燒 焦,被立刻送往醫院,到達時即被宣布死亡。 手機是偉大的發明也是致命的武器。請轉發給 您身邊的人! </a></td>
+ <td>2021-02-07 04:05<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>442</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3qxkxpr3ophf4" target="_blank">台鐵公司化誰在搞鬼？  台鐵員工發起五一依法休假不加班，藉此表達工會對公司化的訴求，一名自稱台鐵員工的網友27日在Dcard論壇發文，指出行政院版草案中3大問題，是引發五一停駛的關鍵，引起網友們討論及支持，文章也登上Dcard當日熱門第一名…</a></td>
+ <td>2023-04-18 10:58<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>443</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/gH-AJ-IDzr-CP4APgB_D_-I5wH_AZ_BD5_-Aj8AD5sA" target="_blank">警政署建議: 九個一律保護你 接電話不管是誰只要談到 銀行金融卡一律掛掉 ② 只要談到你中獎了一律掛掉 只要聽到公務、檢察官、 法務部､稅務司、健保局 一律掛掉 ④ 所有簡訊(Line)要點連結的一律不點 ⑤ 陌生人發簡訊(Line), 要…</a></td>
+ <td>2021-03-17 18:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>444</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/7ZsrD44BBMtPEaE0pcjX" target="_blank">小心假黃金,這種新型材質,放水裡秒沉水 吸鐵時不吸 現場展示火燒 持續加熱融化成金水 過水後變回黃金色 很多商家把這個當黃金賣 現場展示切割 野外移測 這種材料不退骰不過敏 只要15億克 大家千萬小心這種假黃金 這種假黃金切開裡面也是金色的…</a></td>
+ <td>2024-06-17 12:51<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>445</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/352k0qmsi8jk" target="_blank">這部土耳其電影 只有兩分鐘....沒有對白...。  但是...獲得27個獎項。 🥹😨</a></td>
+ <td>2024-05-05 11:35<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>446</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/PN_83_gBgAD8L_AB_id4AP8P_g7ogNgA_4Tv4Af_AAA" target="_blank">88 RAVA SPA 上 闖紅燈 高像素相機 石 稻香台灣 富國路 Fuguo Rd. Yu Cheng Rd. </a></td>
+ <td>2019-11-12 11:09<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>447</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1bi4rnaa4univ" target="_blank">https://windpoweractw.com</a></td>
+ <td>2025-01-14 17:05<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>448</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2f831ga6notl9" target="_blank">筆名「主動脈」的花蓮慈濟醫院麻醉及疼痛科醫師，發表文章〈今夜適合飲酒〉，內容陳述他至醫院搶治台鐵405太魯閣號事故傷患的過程和心聲，讓萬名粉絲落淚按讚支持。    《今夜適合飲酒》  我已經好幾個月沒有喝酒了，但是我覺得今夜適合飲酒，或許明…</a></td>
+ <td>2025-02-17 08:01<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>449</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/2qvregs0jc5pd" target="_blank">敬愛的親朋好友們！ 如果你有滿65歲設籍高雄市者，已經有辦理敬老卡者，記得在新年1月1日到31日前，必須去坐公車、捷運或輕軌，過卡嗶一聲，就會自動儲值1200元儲值金哦！ (或者是去區公所、社會局過卡) 請互相通知親朋好友老人們，記得1/3…</a></td>
+ <td>2025-01-02 06:21<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>450</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/wyqr6bex3asy" target="_blank">您評分通過60萬月付8600元不看負債遲繳協商整合，兩天內撥款！先前幫您簽核車貸 銀行各類信貸房貸的郭經理 速撥/賴：0901319119</a></td>
+ <td>2024-12-04 10:05<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>451</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/d-U-KJMBd8PNbJEMcxvG" target="_blank">來家人們注意了 從現在開始千萬別再吃這八種食物了 尤其是老人和孩子一口都別吃 危害非常大 大家幾乎每天都在吃這些東西 現在的醫院一年四季都人山人海 到底是為什麼呢 我們每個人都希望自己健康 如果說您真的在意自己健康的話 那今天我說的這八種食…</a></td>
+ <td>2025-06-18 11:19<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>452</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/lf82r83o9kxc" target="_blank">鮮為人知的新任教宗羅伯特・普雷沃斯特（Robert Prevost）的故事：  1975年，羅伯特・普雷沃斯特正處人生巔峰——芝加哥的數學老師、虔誠的天主教徒，獲哈佛法學院錄取。他擁有年輕人夢寐以求的一切。  但他做出了一個出人意料的選擇—…</a></td>
+ <td>2025-05-18 12:23<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>453</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/D_ZgJIwBAjOeMOklbEFW" target="_blank">谷歌最討厭你做的5個動作 大家好,我是谷歌醫生邱毓華 1.脊柱最討厭您翹二郎腿 脊柱作為我們身體的支柱 長時間的翹二郎腿 容易使我們的脊柱側彎變形 你只需要屈膝抱胸保持30秒鐘 每天做三組就能夠遠離駝背和高低肩了 2.頸椎最不喜歡您長時間的…</a></td>
+ <td>2024-10-01 11:07<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>454</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/1s39nkoeq8cci" target="_blank">你不可不知的事‼️  【什麼叫紅色同溫層背影在一起？】  ​​1.阿北（柯文哲）身邊的許甫 在中天集團長達七年！ 2.發言人徐千晴 2010年赴中國就讀上海復旦碩士班，而後進入中國演藝圈，直到2020年回台即進入政治圈至今 3.發言人…</a></td>
+ <td>2026-02-03 22:38<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>455</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_06ff5wJAAAAAOwDjeH__-n_gAH8YdwhgAGAAY2___8" target="_blank">* 柚子千萬不要和 分類 鎮靜安眠藥 抗心律不整藥 抗癲癇藥 降血壓藥 降血脂藥 免疫抑制劑 這幾類藥物一起吃 併用後果 舉例 藥物血中濃度提高,導致暈 眩和嗜睡 使藥物血中濃度增加、造成 毒性增加 提高藥物血中濃度,增加不 良反應風險 可…</a></td>
+ <td>2025-09-28 21:45<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>456</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/_n_wB-AH_5_gD-Av8A_wD__f4AfgB8ADgAHAB_AP__8" target="_blank">Johnny 強尼大哥 Johnny 余政宏 民國52年出生 台灣高雄人 現居美國 民國74年台大機械系畢業 民國83年美國明尼蘇達大學航空系博士 任職美國同盟科技公司 研發火箭推進 武器系統 現在是美國陸軍現代化顧問 因為太太有免疫狼瘡問…</a></td>
+ <td>2025-07-25 12:29<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>457</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/efr8ncwm05kp" target="_blank">https://youtu.be/V80mCur-5pM?si=X_0W_BnoQ9jmMg0v</a></td>
+ <td>2025-08-02 17:33<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+<tr>
+ <td>458</td>
+ <td class="num">27</td>
+ <td class="txt"><a href="https://cofacts.tw/article/3emr7wmpztleq" target="_blank">&quot;成功男人背後一定有個偉大的女人&quot;  李光耀與柯玉芝  李光耀在萊佛士學院讀書的時候，成績優異，可是，總有一個女生牢牢壓他一頭。那個女生名叫柯玉芝，面頰帶肉，笑起來像太陽一樣活力四射。  李光耀有些不服又有些好奇，為何自己怎麼考都考不過她呢…</a></td>
+ <td>2026-06-05 09:49<br><small>已有 0 則回應</small></td>
+ <td></td>
+</tr>
+</table>
+</details>
+</body></html>
