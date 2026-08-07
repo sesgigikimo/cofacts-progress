@@ -142,7 +142,7 @@
  <li><b>後台逐筆檢視</b>:本地後台頁面列出每筆摘要與 cofacts 原文連結。</li>
  <li><b>查證三步驟</b>:1. 找訊息原文來源 2. 查證資料正確性 3. 引用數據找原始出處。</li>
  <li><b>產出草稿</b>:判定類型(RUMOR / NOT_RUMOR / OPINIONATED / NOT_ARTICLE),本文 ≤240 字,來源放 reference 欄位;每批 10 篇存檔 <code>drafts/ROUNDn.md</code>,驗字數、抽查連結。</li>
- <li><b>交叉審核(LLM B)</b>:草稿交給另一組 LLM(GLM-5.2)reviewer 檢查——年份標示、數據出處、reference 有效性、判定類型是否合理;結果回給 LLM A 整理修正後,才進入人工審核。</li>
+ <li><b>交叉審核(LLM B)</b>:草稿交給另一組 LLM(Claude Opus 5)reviewer 檢查——年份標示、數據出處、reference 有效性、判定類型是否合理;結果回給 LLM A 整理修正後,才進入人工審核。</li>
  <li><b>人工審核</b>:作者逐篇 review,confirm 才能送出;有疑問退回重查。全流程唯一人工環節。</li>
  <li><b>上傳回應</b>:GraphQL <code>CreateReply</code>(koa:sess cookie 認證),冪等重送、403 自動退避,每篇間隔 5 秒。</li>
  <li><b>記錄歸檔</b>:DB 標 done、<code>posted_replies</code> 入帳、<code>PENDING.md</code> 記錄 reply ID;本頁「實際進度」由 <code>sync_progress.py</code> 每日重新產生。</li>
